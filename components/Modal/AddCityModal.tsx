@@ -13,14 +13,17 @@ const citySchema = z.object({
   population: z
     .number()
     .int()
-    .min(1000, 'Einwohnerzahl muss mindestens 1.000 sein')
-    .max(10000000, 'Einwohnerzahl zu hoch'),
+    .min(0, 'Einwohnerzahl kann nicht negativ sein')
+    .max(10000000, 'Einwohnerzahl zu hoch')
+    .optional()
+    .or(z.literal(0)),
   digitalization_budget: z
     .number()
     .min(0, 'Budget kann nicht negativ sein')
     .max(1000000000, 'Budget zu hoch')
-    .optional(),
-  city_category: z.enum(['Großstadt', 'Mittelstadt', 'Kleinstadt']),
+    .optional()
+    .or(z.literal(0)),
+  city_category: z.enum(['Großstadt', 'Mittelstadt', 'Kleinstadt']).optional(),
   description: z.string().optional(),
   website: z.string().url('Gültige URL erforderlich').optional().or(z.literal('')),
 })
@@ -49,22 +52,27 @@ export default function AddCityModal({ isOpen, onClose, onSuccess }: AddCityModa
   } = useForm<CityFormData>({
     resolver: zodResolver(citySchema),
     defaultValues: {
-      population: 50000,
-      digitalization_budget: 1000000,
-      city_category: 'Mittelstadt',
+      population: 0,
+      digitalization_budget: 0,
+      city_category: 'Kleinstadt',
     },
   })
 
   const cityName = watch('name')
   const population = watch('population')
 
-  // Automatische Kategorisierung
+  // Automatische Kategorisierung (nur wenn Einwohnerzahl > 0)
   const handlePopulationChange = (pop: number) => {
-    if (pop >= 100000) {
-      setValue('city_category', 'Großstadt')
-    } else if (pop >= 20000) {
-      setValue('city_category', 'Mittelstadt')
+    if (pop > 0) {
+      if (pop >= 100000) {
+        setValue('city_category', 'Großstadt')
+      } else if (pop >= 20000) {
+        setValue('city_category', 'Mittelstadt')
+      } else {
+        setValue('city_category', 'Kleinstadt')
+      }
     } else {
+      // Keine Einwohnerzahl: Default Kleinstadt
       setValue('city_category', 'Kleinstadt')
     }
   }
@@ -107,12 +115,19 @@ export default function AddCityModal({ isOpen, onClose, onSuccess }: AddCityModa
     setStatusMessage(null)
 
     try {
-      await createCity({
-        ...data,
+      // Prepare data with defaults for optional fields
+      const cityData = {
+        name: data.name,
         latitude: coordinates.lat,
         longitude: coordinates.lng,
+        population: data.population || 0,
         digitalization_budget: data.digitalization_budget || 0,
-      })
+        city_category: data.city_category || 'Kleinstadt',
+        description: data.description,
+        website: data.website,
+      }
+
+      await createCity(cityData)
 
       setStatusMessage({ type: 'success', text: '✅ Stadt erfolgreich hinzugefügt!' })
       
@@ -222,7 +237,7 @@ export default function AddCityModal({ isOpen, onClose, onSuccess }: AddCityModa
             {/* Einwohnerzahl */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                👥 Einwohnerzahl <span className="text-red-500">*</span>
+                👥 Einwohnerzahl <span className="text-gray-500 text-xs">(optional)</span>
               </label>
               <input
                 {...register('population', {
@@ -231,7 +246,7 @@ export default function AddCityModal({ isOpen, onClose, onSuccess }: AddCityModa
                 })}
                 type="number"
                 step="1000"
-                placeholder="50000"
+                placeholder="z.B. 50000"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               {population > 0 && (
@@ -247,13 +262,13 @@ export default function AddCityModal({ isOpen, onClose, onSuccess }: AddCityModa
             {/* Digitalisierungsbudget */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                💶 Digitalisierungsbudget (optional)
+                💶 Digitalisierungsbudget <span className="text-gray-500 text-xs">(optional)</span>
               </label>
               <input
                 {...register('digitalization_budget', { valueAsNumber: true })}
                 type="number"
                 step="100000"
-                placeholder="1000000"
+                placeholder="z.B. 1000000"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               {watch('digitalization_budget') && watch('digitalization_budget')! > 0 && (
@@ -266,7 +281,7 @@ export default function AddCityModal({ isOpen, onClose, onSuccess }: AddCityModa
             {/* Kategorie */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Stadt-Kategorie <span className="text-red-500">*</span>
+                Stadt-Kategorie <span className="text-gray-500 text-xs">(wird automatisch gesetzt)</span>
               </label>
               <div className="grid grid-cols-3 gap-2">
                 {CITY_CATEGORIES.map((category) => (
@@ -301,12 +316,17 @@ export default function AddCityModal({ isOpen, onClose, onSuccess }: AddCityModa
                   </label>
                 ))}
               </div>
+              {population === 0 && (
+                <p className="mt-2 text-xs text-gray-500">
+                  💡 Tipp: Geben Sie eine Einwohnerzahl ein, um die Kategorie automatisch zu setzen
+                </p>
+              )}
             </div>
 
             {/* Beschreibung */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Beschreibung (optional)
+                Beschreibung <span className="text-gray-500 text-xs">(optional)</span>
               </label>
               <textarea
                 {...register('description')}
@@ -319,7 +339,7 @@ export default function AddCityModal({ isOpen, onClose, onSuccess }: AddCityModa
             {/* Website */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Website (optional)
+                Website <span className="text-gray-500 text-xs">(optional)</span>
               </label>
               <input
                 {...register('website')}
