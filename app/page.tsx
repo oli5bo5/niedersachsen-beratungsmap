@@ -37,7 +37,6 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isAddCityModalOpen, setIsAddCityModalOpen] = useState(false)
-  const [selectedCity, setSelectedCity] = useState<City | null>(null)
 
   // Use company filters hook
   const {
@@ -52,7 +51,7 @@ export default function Home() {
     clearFilters,
   } = useCompanyFilters(companies)
 
-  // Find city object when city name is selected
+  // Find city object when city name is selected (Hook gives string, we need object for map)
   const selectedCityObject = selectedCity 
     ? cities.find(c => c.name === selectedCity) || null
     : null
@@ -170,7 +169,10 @@ export default function Home() {
           {/* City Dropdown */}
           {showCities && cities.length > 0 && (
             <div className="absolute top-4 right-4 z-[1000] w-64">
-              <CityDropdown cities={cities} onCitySelect={setSelectedCity} />
+              <CityDropdown 
+                cities={cities} 
+                onCitySelect={(city) => setSelectedCity(city.name)} 
+              />
             </div>
           )}
 

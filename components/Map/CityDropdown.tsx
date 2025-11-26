@@ -9,6 +9,11 @@ interface CityDropdownProps {
   onCitySelect: (city: City) => void
 }
 
+// Helper to match selected city by name
+function isSameCity(city: City, selectedName: string | null): boolean {
+  return selectedName ? city.name === selectedName : false
+}
+
 export default function CityDropdown({ cities, onCitySelect }: CityDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [selectedCity, setSelectedCity] = useState<City | null>(null)
