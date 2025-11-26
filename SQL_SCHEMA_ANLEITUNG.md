@@ -1,3 +1,29 @@
+# 🎯 SQL Schema in Supabase ausführen - JETZT!
+
+## ⚠️ WICHTIG: Dieser Schritt ist KRITISCH für Ihre App!
+
+Ihre App zeigt "Fehler beim Laden der Daten", weil die Tabelle `consulting_companies` noch nicht existiert.
+
+---
+
+## ✅ **Sie sind bereits im SQL Editor von "niedersachsen-map"!**
+
+### Schritt-für-Schritt Anleitung:
+
+#### 1. **Neuen Query-Tab erstellen**
+
+Klicken Sie auf das **"+"** Symbol neben dem aktuellen Tab ("Stakeholders View Read Access")
+
+#### 2. **SQL Schema kopieren**
+
+Öffnen Sie die Datei:
+```
+niedersachsen-beratungsmap/supabase/migrations/001_initial_schema.sql
+```
+
+**Oder kopieren Sie direkt von hier:**
+
+```sql
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -5,7 +31,6 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS consulting_companies (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
-    city TEXT,
     description TEXT,
     address TEXT,
     latitude DECIMAL(10, 8),
@@ -106,4 +131,69 @@ CREATE TRIGGER update_consulting_companies_updated_at
     BEFORE UPDATE ON consulting_companies
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
+```
+
+#### 3. **SQL einfügen**
+
+1. Klicken Sie in den Editor-Bereich
+2. Drücken Sie **Strg+A** (alles auswählen)
+3. Drücken Sie **Strg+V** (einfügen)
+
+#### 4. **SQL ausführen**
+
+Klicken Sie auf den **"Run"** Button (oder drücken Sie **F5** oder **Strg+Enter**)
+
+#### 5. **Erfolgsmeldung**
+
+Sie sollten sehen:
+```
+✓ Success. No rows returned
+```
+
+---
+
+## ✅ **Überprüfung**
+
+Nach dem Ausführen:
+
+1. Gehen Sie zu **"Table Editor"** (linke Sidebar, Tabellen-Icon)
+2. Sie sollten **3 neue Tabellen** sehen:
+   - ✅ `consulting_companies` (leer)
+   - ✅ `specializations` (**5 Einträge** - Digitalisierung, KI, etc.)
+   - ✅ `company_specializations` (leer)
+
+---
+
+## 🎉 **Fertig!**
+
+Nach diesem Schritt:
+
+1. **Ihre deployed App funktioniert!**
+2. **Kein "Fehler beim Laden der Daten" mehr**
+3. **Sie können Firmen über /admin hinzufügen**
+
+---
+
+## 💡 **Warum hat das gefehlt?**
+
+Die Vercel-App versucht, Daten aus `consulting_companies` zu laden, aber diese Tabelle existierte noch nicht in Ihrer Supabase-Datenbank. Jetzt, nach dem Ausführen des SQL-Schemas, ist alles bereit!
+
+---
+
+## 🆘 **Falls Fehler auftreten:**
+
+### "relation already exists"
+- **Bedeutung:** Tabelle existiert bereits (alles gut!)
+- **Lösung:** Ignorieren Sie diese Meldungen
+
+### "permission denied"
+- **Lösung:** Stellen Sie sicher, dass Sie als Owner/Admin eingeloggt sind
+
+### Andere Fehler
+- Kopieren Sie die Fehlermeldung
+- Überprüfen Sie, ob das komplette SQL kopiert wurde
+
+---
+
+**Führen Sie das SQL JETZT aus, dann funktioniert Ihre App! 🚀**
 

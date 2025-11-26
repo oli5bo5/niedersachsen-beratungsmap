@@ -91,3 +91,46 @@ export async function reverseGeocode(lat: number, lng: number): Promise<string> 
   }
 }
 
+/**
+ * Batch geocode multiple addresses (with rate limiting)
+ */
+export async function geocodeMultipleAddresses(
+  addresses: string[]
+): Promise<Array<GeocodingResult | null>> {
+  const results: Array<GeocodingResult | null> = []
+
+  for (const address of addresses) {
+    try {
+      // Delay between requests (Nominatim rate limit: 1 req/sec)
+      await new Promise((resolve) => setTimeout(resolve, 1100))
+      const result = await geocodeAddress(address)
+      results.push(result)
+    } catch (error) {
+      console.error(`Geocoding failed for: ${address}`, error)
+      results.push(null)
+    }
+  }
+
+  return results
+}
+
+/**
+ * Validate if coordinates are within Niedersachsen bounds
+ */
+export function isInNiedersachsen(lat: number, lng: number): boolean {
+  // Approximate bounds of Niedersachsen
+  const bounds = {
+    north: 53.9,
+    south: 51.3,
+    east: 11.6,
+    west: 6.6,
+  }
+
+  return (
+    lat >= bounds.south &&
+    lat <= bounds.north &&
+    lng >= bounds.west &&
+    lng <= bounds.east
+  )
+}
+

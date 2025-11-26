@@ -89,6 +89,7 @@ export async function createCompany(input: CompanyInput): Promise<CompanyWithSpe
       .from('consulting_companies')
       .insert({
         name: input.name,
+        city: input.city,
         description: input.description,
         address: input.address,
         latitude: input.latitude,
@@ -100,7 +101,10 @@ export async function createCompany(input: CompanyInput): Promise<CompanyWithSpe
       .select()
       .single()
 
-    if (companyError) throw companyError
+    if (companyError) {
+      console.error('Company insert error:', companyError)
+      throw new Error(`Fehler beim Erstellen: ${companyError.message}`)
+    }
 
     // Insert company specializations
     if (input.specialization_ids.length > 0) {

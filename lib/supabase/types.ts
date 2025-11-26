@@ -12,6 +12,7 @@ export interface Specialization {
 export interface Company {
   id: string
   name: string
+  city: string | null
   description: string | null
   address: string | null
   latitude: number | null
@@ -36,6 +37,7 @@ export interface CompanyWithSpecializations extends Company {
 
 export interface CompanyInput {
   name: string
+  city?: string
   description?: string
   address?: string
   latitude?: number

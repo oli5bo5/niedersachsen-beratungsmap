@@ -8,12 +8,13 @@ import type { Specialization } from '@/lib/supabase/types'
 import { createCompany } from '@/app/actions/companies'
 
 const companySchema = z.object({
-  name: z.string().min(2, 'Name muss mindestens 2 Zeichen lang sein'),
-  description: z.string().optional(),
-  address: z.string().min(5, 'Adresse muss mindestens 5 Zeichen lang sein'),
-  website: z.string().url('Ungültige URL').optional().or(z.literal('')),
-  email: z.string().email('Ungültige E-Mail').optional().or(z.literal('')),
-  phone: z.string().optional(),
+  name: z.string().min(3, 'Name muss mindestens 3 Zeichen lang sein'),
+  city: z.string().min(2, 'Stadt ist erforderlich'),
+  description: z.string().min(20, 'Beschreibung muss mindestens 20 Zeichen haben'),
+  address: z.string().min(5, 'Vollständige Adresse erforderlich'),
+  website: z.string().url('Gültige URL erforderlich').optional().or(z.literal('')),
+  email: z.string().email('Gültige E-Mail erforderlich'),
+  phone: z.string().min(10, 'Gültige Telefonnummer erforderlich'),
   specialization_ids: z.array(z.string()).min(1, 'Mindestens eine Spezialisierung auswählen'),
 })
 
@@ -45,11 +46,12 @@ export default function AddCompanyForm({
   })
 
   const addressValue = watch('address')
+  const cityValue = watch('city')
 
   // Geocode address
   const handleGeocode = async () => {
-    if (!addressValue) {
-      setError('Bitte geben Sie eine Adresse ein')
+    if (!addressValue || !cityValue) {
+      setError('Bitte geben Sie Stadt und Adresse ein')
       return
     }
 
@@ -57,10 +59,11 @@ export default function AddCompanyForm({
     setError(null)
 
     try {
+      const fullAddress = `${addressValue}, ${cityValue}, Niedersachsen, Deutschland`
       const response = await fetch('/api/geocode', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address: addressValue }),
+        body: JSON.stringify({ address: fullAddress }),
       })
 
       if (!response.ok) {
@@ -90,9 +93,16 @@ export default function AddCompanyForm({
       }
 
       await createCompany({
-        ...data,
+        name: data.name,
+        city: data.city,
+        description: data.description,
+        address: data.address,
         latitude: coordinates.lat,
         longitude: coordinates.lng,
+        website: data.website,
+        email: data.email,
+        phone: data.phone,
+        specialization_ids: data.specialization_ids,
       })
 
       setSuccess('✅ Unternehmen erfolgreich hinzugefügt!')
@@ -122,28 +132,50 @@ export default function AddCompanyForm({
 
       {/* Name */}
       <div>
-        <label className="block text-sm font-medium mb-1">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
           Firmenname <span className="text-red-500">*</span>
         </label>
         <input
           {...register('name')}
-          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="z.B. Digital Consulting GmbH"
+          type="text"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="z.B. Digital Pioneers Hannover"
         />
         {errors.name && (
-          <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>
+          <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+        )}
+      </div>
+
+      {/* Stadt */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Stadt <span className="text-red-500">*</span>
+        </label>
+        <input
+          {...register('city')}
+          type="text"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="z.B. Hannover"
+        />
+        {errors.city && (
+          <p className="text-red-500 text-sm mt-1">{errors.city.message}</p>
         )}
       </div>
 
       {/* Description */}
       <div>
-        <label className="block text-sm font-medium mb-1">Beschreibung</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Beschreibung <span className="text-red-500">*</span>
+        </label>
         <textarea
           {...register('description')}
-          rows={3}
-          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Kurze Beschreibung des Unternehmens..."
+          rows={4}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="Beschreiben Sie die Dienstleistungen und Expertise des Unternehmens..."
         />
+        {errors.description && (
+          <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>
+        )}
       </div>
 
       {/* Address with Geocode Button */}
