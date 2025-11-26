@@ -249,9 +249,9 @@ export default function AddCityModal({ isOpen, onClose, onSuccess }: AddCityModa
                 placeholder="z.B. 50000"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              {population > 0 && (
+              {(population ?? 0) > 0 && (
                 <p className="mt-1 text-xs text-gray-600">
-                  {formatNumber(population)} Einwohner
+                  {formatNumber(population ?? 0)} Einwohner
                 </p>
               )}
               {errors.population && (
@@ -316,7 +316,7 @@ export default function AddCityModal({ isOpen, onClose, onSuccess }: AddCityModa
                   </label>
                 ))}
               </div>
-              {population === 0 && (
+              {(population ?? 0) === 0 && (
                 <p className="mt-2 text-xs text-gray-500">
                   💡 Tipp: Geben Sie eine Einwohnerzahl ein, um die Kategorie automatisch zu setzen
                 </p>
