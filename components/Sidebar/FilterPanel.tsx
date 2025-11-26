@@ -1,6 +1,12 @@
 'use client'
 
 import type { Specialization, SortOption } from '@/lib/supabase/types'
+import CityFilter from './CityFilter'
+
+interface CityWithCount {
+  city: string
+  count: number
+}
 
 interface FilterPanelProps {
   specializations: Specialization[]
@@ -9,6 +15,11 @@ interface FilterPanelProps {
   sortBy: SortOption
   onSortChange: (sort: SortOption) => void
   onClearFilters: () => void
+  // City filter props
+  cities: CityWithCount[]
+  selectedCity: string | null
+  onCitySelect: (city: string | null) => void
+  totalCompanies: number
 }
 
 export default function FilterPanel({
@@ -18,8 +29,12 @@ export default function FilterPanel({
   sortBy,
   onSortChange,
   onClearFilters,
+  cities,
+  selectedCity,
+  onCitySelect,
+  totalCompanies,
 }: FilterPanelProps) {
-  const hasActiveFilters = selectedSpecializations.length > 0
+  const hasActiveFilters = selectedSpecializations.length > 0 || selectedCity !== null
 
   return (
     <div className="p-4 border-b bg-gray-50">
@@ -30,13 +45,38 @@ export default function FilterPanel({
             onClick={onClearFilters}
             className="text-xs text-blue-600 hover:text-blue-800"
           >
-            Alle löschen
+            Alle zurücksetzen
           </button>
         )}
       </div>
 
-      {/* Specializations Filter */}
+      {/* Sort Options */}
       <div className="mb-4">
+        <p className="text-xs text-gray-600 mb-2">Sortierung:</p>
+        <select
+          value={sortBy}
+          onChange={(e) => onSortChange(e.target.value as SortOption)}
+          className="w-full text-sm border rounded px-2 py-1"
+        >
+          <option value="alphabetical">Alphabetisch</option>
+          <option value="newest">Neueste zuerst</option>
+          <option value="nearest">Nächste (TODO)</option>
+        </select>
+      </div>
+
+      {/* City Filter */}
+      <div className="mb-4">
+        <p className="text-xs text-gray-600 mb-2">Standorte:</p>
+        <CityFilter
+          cities={cities}
+          selectedCity={selectedCity}
+          onCitySelect={onCitySelect}
+          totalCompanies={totalCompanies}
+        />
+      </div>
+
+      {/* Specializations Filter */}
+      <div>
         <p className="text-xs text-gray-600 mb-2">Spezialisierungen:</p>
         <div className="space-y-2">
           {specializations.map((spec) => (
@@ -60,20 +100,6 @@ export default function FilterPanel({
             </label>
           ))}
         </div>
-      </div>
-
-      {/* Sort Options */}
-      <div>
-        <p className="text-xs text-gray-600 mb-2">Sortierung:</p>
-        <select
-          value={sortBy}
-          onChange={(e) => onSortChange(e.target.value as SortOption)}
-          className="w-full text-sm border rounded px-2 py-1"
-        >
-          <option value="alphabetical">Alphabetisch</option>
-          <option value="newest">Neueste zuerst</option>
-          <option value="nearest">Nächste (TODO)</option>
-        </select>
       </div>
     </div>
   )
