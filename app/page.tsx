@@ -43,11 +43,19 @@ export default function Home() {
   const {
     filteredCompanies,
     filterState,
+    selectedCity,
+    citiesWithCounts,
     setSearchQuery,
     toggleSpecialization,
     setSortBy,
+    setSelectedCity,
     clearFilters,
   } = useCompanyFilters(companies)
+
+  // Find city object when city name is selected
+  const selectedCityObject = selectedCity 
+    ? cities.find(c => c.name === selectedCity) || null
+    : null
 
   // Load data on mount
   useEffect(() => {
@@ -147,9 +155,12 @@ export default function Home() {
             selectedCompany={selectedCompanyId}
             onSelectCompany={setSelectedCompanyId}
             filterState={filterState}
+            selectedCity={selectedCity}
+            citiesWithCounts={citiesWithCounts}
             setSearchQuery={setSearchQuery}
             toggleSpecialization={toggleSpecialization}
             setSortBy={setSortBy}
+            setSelectedCity={setSelectedCity}
             clearFilters={clearFilters}
           />
         </aside>
@@ -170,7 +181,7 @@ export default function Home() {
             onMarkerClick={setSelectedCompanyId}
             showCities={showCities}
             hasActiveFilters={filterState.selectedSpecializations.length > 0}
-            selectedCity={selectedCity}
+            selectedCity={selectedCityObject}
           />
         </main>
       </div>

@@ -5,6 +5,11 @@ import type { CompanyWithSpecializations, Specialization, FilterState, SortOptio
 import { useCompanyFilters } from '@/hooks/useCompanyFilters'
 import FilterPanel from './FilterPanel'
 
+interface CityWithCount {
+  city: string
+  count: number
+}
+
 interface CompanyListProps {
   companies: CompanyWithSpecializations[]
   specializations: Specialization[]
@@ -12,9 +17,12 @@ interface CompanyListProps {
   onSelectCompany: (id: string) => void
   // Filter props from parent
   filterState: FilterState
+  selectedCity: string | null
+  citiesWithCounts: CityWithCount[]
   setSearchQuery: (query: string) => void
   toggleSpecialization: (id: string) => void
   setSortBy: (sortBy: SortOption) => void
+  setSelectedCity: (city: string | null) => void
   clearFilters: () => void
 }
 
@@ -24,20 +32,25 @@ export default function CompanyList({
   selectedCompany,
   onSelectCompany,
   filterState,
+  selectedCity,
+  citiesWithCounts,
   setSearchQuery: updateSearchQuery,
   toggleSpecialization,
   setSortBy,
+  setSelectedCity,
   clearFilters,
 }: CompanyListProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [isOpen, setIsOpen] = useState(true)
 
-  // Use the filter hook locally to get filtered companies for display
-  const { filteredCompanies } = useCompanyFilters(companies)
-
   // Apply the filter state from parent
   const displayCompanies = useMemo(() => {
     let result = [...companies]
+
+    // Filter by city
+    if (selectedCity) {
+      result = result.filter((company) => company.city === selectedCity)
+    }
 
     // Filter by search query
     if (filterState.searchQuery) {
@@ -73,7 +86,7 @@ export default function CompanyList({
     }
 
     return result
-  }, [companies, filterState])
+  }, [companies, filterState, selectedCity])
 
   // Debounced search
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,6 +151,10 @@ export default function CompanyList({
             sortBy={filterState.sortBy}
             onSortChange={setSortBy}
             onClearFilters={clearFilters}
+            cities={citiesWithCounts}
+            selectedCity={selectedCity}
+            onCitySelect={setSelectedCity}
+            totalCompanies={companies.length}
           />
 
           {/* Company List */}

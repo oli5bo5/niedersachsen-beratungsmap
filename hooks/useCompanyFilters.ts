@@ -10,9 +10,15 @@ export function useCompanyFilters(companies: CompanyWithSpecializations[]) {
     selectedSpecializations: [],
     sortBy: 'alphabetical',
   })
+  const [selectedCity, setSelectedCity] = useState<string | null>(null)
 
   const filteredAndSortedCompanies = useMemo(() => {
     let result = [...companies]
+
+    // Filter by city
+    if (selectedCity) {
+      result = result.filter((company) => company.city === selectedCity)
+    }
 
     // Filter by search query
     if (filterState.searchQuery) {
@@ -51,7 +57,7 @@ export function useCompanyFilters(companies: CompanyWithSpecializations[]) {
     }
 
     return result
-  }, [companies, filterState])
+  }, [companies, filterState, selectedCity])
 
   const setSearchQuery = (query: string) => {
     setFilterState((prev) => ({ ...prev, searchQuery: query }))
@@ -76,14 +82,33 @@ export function useCompanyFilters(companies: CompanyWithSpecializations[]) {
       selectedSpecializations: [],
       sortBy: 'alphabetical',
     })
+    setSelectedCity(null)
   }
+
+  // Get cities with company counts
+  const citiesWithCounts = useMemo(() => {
+    const cityMap = new Map<string, number>()
+    
+    companies.forEach((company) => {
+      if (company.city) {
+        cityMap.set(company.city, (cityMap.get(company.city) || 0) + 1)
+      }
+    })
+
+    return Array.from(cityMap.entries())
+      .map(([city, count]) => ({ city, count }))
+      .sort((a, b) => a.city.localeCompare(b.city, 'de'))
+  }, [companies])
 
   return {
     filteredCompanies: filteredAndSortedCompanies,
     filterState,
+    selectedCity,
+    citiesWithCounts,
     setSearchQuery,
     toggleSpecialization,
     setSortBy,
+    setSelectedCity,
     clearFilters,
   }
 }
