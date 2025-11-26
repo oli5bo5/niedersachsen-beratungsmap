@@ -26,6 +26,7 @@ const citySchema = z.object({
   city_category: z.enum(['Großstadt', 'Mittelstadt', 'Kleinstadt']).optional(),
   description: z.string().optional(),
   website: z.string().url('Gültige URL erforderlich').optional().or(z.literal('')),
+  specializations: z.array(z.string()).optional(),
 })
 
 type CityFormData = z.infer<typeof citySchema>
@@ -35,6 +36,15 @@ interface AddCityModalProps {
   onClose: () => void
   onSuccess?: () => void
 }
+
+// Available specializations
+const AVAILABLE_SPECIALIZATIONS = [
+  { name: 'Cloud-Migration', icon: '☁️' },
+  { name: 'Cybersecurity', icon: '🔒' },
+  { name: 'Digitalisierung', icon: '📱' },
+  { name: 'KI-Beratung', icon: '🤖' },
+  { name: 'Prozessoptimierung', icon: '⚙️' },
+]
 
 export default function AddCityModal({ isOpen, onClose, onSuccess }: AddCityModalProps) {
   const [isGeocoding, setIsGeocoding] = useState(false)
@@ -125,6 +135,7 @@ export default function AddCityModal({ isOpen, onClose, onSuccess }: AddCityModa
         city_category: data.city_category || 'Kleinstadt',
         description: data.description,
         website: data.website,
+        specializations: data.specializations || [],
       }
 
       await createCity(cityData)
@@ -350,6 +361,33 @@ export default function AddCityModal({ isOpen, onClose, onSuccess }: AddCityModa
               {errors.website && (
                 <p className="text-red-500 text-xs mt-1">{errors.website.message}</p>
               )}
+            </div>
+
+            {/* Specializations */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Spezialisierungen <span className="text-gray-500 text-xs">(optional)</span>
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {AVAILABLE_SPECIALIZATIONS.map((spec) => (
+                  <label
+                    key={spec.name}
+                    className="flex items-center gap-2 p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      value={spec.name}
+                      {...register('specializations')}
+                      className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                    />
+                    <span className="text-lg">{spec.icon}</span>
+                    <span className="text-sm font-medium text-gray-700">{spec.name}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-gray-500">
+                💡 Wählen Sie die Bereiche, in denen die Stadt besondere Stärken hat
+              </p>
             </div>
           </div>
 

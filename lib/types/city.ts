@@ -12,6 +12,7 @@ export interface City {
   city_category: 'Großstadt' | 'Mittelstadt' | 'Kleinstadt'
   description?: string | null
   website?: string | null
+  specializations?: string[]
   created_at: string
   updated_at: string
 }

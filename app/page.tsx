@@ -9,6 +9,7 @@ import type { City } from '@/lib/types/city'
 import CompanyList from '@/components/Sidebar/CompanyList'
 import ExportButton from '@/components/Export/ExportButton'
 import AddCityModal from '@/components/Modal/AddCityModal'
+import CityDropdown from '@/components/Map/CityDropdown'
 import { useCompanyFilters } from '@/hooks/useCompanyFilters'
 
 // Dynamic import for Map component (client-side only)
@@ -36,6 +37,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isAddCityModalOpen, setIsAddCityModalOpen] = useState(false)
+  const [selectedCity, setSelectedCity] = useState<City | null>(null)
 
   // Use company filters hook
   const {
@@ -154,6 +156,13 @@ export default function Home() {
 
         {/* Map - 70% width on desktop */}
         <main className="flex-1 relative">
+          {/* City Dropdown */}
+          {showCities && cities.length > 0 && (
+            <div className="absolute top-4 right-4 z-[1000] w-64">
+              <CityDropdown cities={cities} onCitySelect={setSelectedCity} />
+            </div>
+          )}
+
           <MapComponent
             companies={filteredCompanies}
             allCities={cities}
@@ -161,6 +170,7 @@ export default function Home() {
             onMarkerClick={setSelectedCompanyId}
             showCities={showCities}
             hasActiveFilters={filterState.selectedSpecializations.length > 0}
+            selectedCity={selectedCity}
           />
         </main>
       </div>

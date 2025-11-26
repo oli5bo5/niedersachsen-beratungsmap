@@ -35,6 +35,7 @@ interface MapComponentProps {
   onCityClick?: (cityId: string) => void
   showCities?: boolean
   hasActiveFilters?: boolean
+  selectedCity?: City | null
 }
 
 export default function MapComponent({
@@ -45,6 +46,7 @@ export default function MapComponent({
   onCityClick,
   showCities = true,
   hasActiveFilters = false,
+  selectedCity = null,
 }: MapComponentProps) {
   const [geojsonData, setGeojsonData] = useState<any>(null)
   const [map, setMap] = useState<any>(null)
@@ -57,6 +59,16 @@ export default function MapComponent({
       setL(leaflet.default)
     })
   }, [])
+
+  // Zoom to selected city
+  useEffect(() => {
+    if (map && selectedCity) {
+      map.setView([selectedCity.latitude, selectedCity.longitude], 12, {
+        animate: true,
+        duration: 1,
+      })
+    }
+  }, [map, selectedCity])
 
   // Filter cities based on companies when filters are active
   const visibleCities = useMemo(() => {

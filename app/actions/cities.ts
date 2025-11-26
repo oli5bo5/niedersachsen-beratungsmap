@@ -70,6 +70,7 @@ export async function createCity(input: CityInput): Promise<City> {
       city_category: input.city_category ?? 'Kleinstadt',
       description: input.description || null,
       website: input.website || null,
+      specializations: input.specializations || [],
     }
 
     const { data, error } = await supabase

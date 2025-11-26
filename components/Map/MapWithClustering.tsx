@@ -42,6 +42,7 @@ interface MapWithClusteringProps {
   enableClustering?: boolean
   showCities?: boolean
   hasActiveFilters?: boolean
+  selectedCity?: City | null
 }
 
 export default function MapWithClustering({
@@ -53,6 +54,7 @@ export default function MapWithClustering({
   enableClustering = true,
   showCities = true,
   hasActiveFilters = false,
+  selectedCity = null,
 }: MapWithClusteringProps) {
   const [geojsonData, setGeojsonData] = useState<any>(null)
   const [map, setMap] = useState<any>(null)
@@ -63,6 +65,16 @@ export default function MapWithClustering({
       setL(leaflet.default)
     })
   }, [])
+
+  // Zoom to selected city
+  useEffect(() => {
+    if (map && selectedCity) {
+      map.setView([selectedCity.latitude, selectedCity.longitude], 12, {
+        animate: true,
+        duration: 1,
+      })
+    }
+  }, [map, selectedCity])
 
   // Filter cities based on companies when filters are active
   const visibleCities = useMemo(() => {
@@ -263,6 +275,21 @@ export default function MapWithClustering({
                     {city.description && (
                       <p className="text-gray-600 text-xs mt-2 pt-2 border-t">{city.description}</p>
                     )}
+                    {city.specializations && city.specializations.length > 0 && (
+                      <div className="mt-2 pt-2 border-t">
+                        <p className="text-gray-500 text-xs mb-1">Spezialisierungen:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {city.specializations.map((spec, idx) => (
+                            <span
+                              key={idx}
+                              className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded"
+                            >
+                              {getSpecializationIcon(spec)} {spec}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     {city.website && (
                       <a
                         href={city.website}
@@ -350,5 +377,17 @@ export default function MapWithClustering({
       )}
     </div>
   )
+}
+
+// Helper function to get specialization icon
+function getSpecializationIcon(spec: string): string {
+  const icons: Record<string, string> = {
+    'Cloud-Migration': '☁️',
+    'Cybersecurity': '🔒',
+    'Digitalisierung': '📱',
+    'KI-Beratung': '🤖',
+    'Prozessoptimierung': '⚙️',
+  }
+  return icons[spec] || '📍'
 }
 
