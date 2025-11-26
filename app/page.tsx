@@ -8,6 +8,7 @@ import type { CompanyWithSpecializations, Specialization } from '@/lib/supabase/
 import type { City } from '@/lib/types/city'
 import CompanyList from '@/components/Sidebar/CompanyList'
 import ExportButton from '@/components/Export/ExportButton'
+import AddCityModal from '@/components/Modal/AddCityModal'
 import { useCompanyFilters } from '@/hooks/useCompanyFilters'
 
 // Dynamic import for Map component (client-side only)
@@ -34,6 +35,7 @@ export default function Home() {
   const [showCities, setShowCities] = useState(true)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isAddCityModalOpen, setIsAddCityModalOpen] = useState(false)
 
   // Use company filters hook
   const {
@@ -47,27 +49,33 @@ export default function Home() {
 
   // Load data on mount
   useEffect(() => {
-    async function loadData() {
-      try {
-        setIsLoading(true)
-        const [companiesData, specializationsData, citiesData] = await Promise.all([
-          getCompanies(),
-          getSpecializations(),
-          getCities(),
-        ])
-        setCompanies(companiesData)
-        setSpecializations(specializationsData)
-        setCities(citiesData)
-      } catch (err) {
-        console.error('Error loading data:', err)
-        setError('Fehler beim Laden der Daten')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
     loadData()
   }, [])
+
+  // Separate function so we can call it after adding a city
+  const loadData = async () => {
+    try {
+      setIsLoading(true)
+      const [companiesData, specializationsData, citiesData] = await Promise.all([
+        getCompanies(),
+        getSpecializations(),
+        getCities(),
+      ])
+      setCompanies(companiesData)
+      setSpecializations(specializationsData)
+      setCities(citiesData)
+    } catch (err) {
+      console.error('Error loading data:', err)
+      setError('Fehler beim Laden der Daten')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleCityAdded = () => {
+    // Reload data to show new city
+    loadData()
+  }
 
   if (isLoading) {
     return (
@@ -115,6 +123,12 @@ export default function Home() {
                 />
                 <span className="text-sm">🏙️ Städte anzeigen</span>
               </label>
+              <button
+                onClick={() => setIsAddCityModalOpen(true)}
+                className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+              >
+                + 🏙️ Stadt
+              </button>
               <ExportButton companies={companies} />
             </div>
           </div>
@@ -150,6 +164,13 @@ export default function Home() {
           />
         </main>
       </div>
+
+      {/* Add City Modal */}
+      <AddCityModal
+        isOpen={isAddCityModalOpen}
+        onClose={() => setIsAddCityModalOpen(false)}
+        onSuccess={handleCityAdded}
+      />
     </div>
   )
 }
