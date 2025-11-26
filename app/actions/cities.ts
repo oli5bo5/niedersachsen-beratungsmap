@@ -60,18 +60,21 @@ export async function createCity(input: CityInput): Promise<City> {
   try {
     const supabase = createServerClient()
 
+    // Ensure all NOT NULL fields have values
+    const cityData = {
+      name: input.name,
+      latitude: input.latitude,
+      longitude: input.longitude,
+      population: input.population ?? 0,
+      digitalization_budget: input.digitalization_budget ?? 0,
+      city_category: input.city_category ?? 'Kleinstadt',
+      description: input.description || null,
+      website: input.website || null,
+    }
+
     const { data, error } = await supabase
       .from('cities')
-      .insert({
-        name: input.name,
-        latitude: input.latitude,
-        longitude: input.longitude,
-        population: input.population,
-        digitalization_budget: input.digitalization_budget,
-        city_category: input.city_category,
-        description: input.description || null,
-        website: input.website || null,
-      })
+      .insert(cityData)
       .select()
       .single()
 
