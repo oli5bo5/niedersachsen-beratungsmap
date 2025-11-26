@@ -3,8 +3,12 @@
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { getCompanies, getSpecializations, deleteCompany } from '../actions/companies'
+import { getCities } from '../actions/cities'
 import type { CompanyWithSpecializations, Specialization } from '@/lib/supabase/types'
+import type { City } from '@/lib/types/city'
 import AddCompanyForm from '@/components/Admin/AddCompanyForm'
+import AddCityForm from '@/components/Admin/AddCityForm'
+import CityList from '@/components/Admin/CityList'
 
 // Dynamic import for Map component (client-side only)
 const MapComponent = dynamic(
@@ -22,17 +26,20 @@ const MapComponent = dynamic(
 export default function AdminPage() {
   const [companies, setCompanies] = useState<CompanyWithSpecializations[]>([])
   const [specializations, setSpecializations] = useState<Specialization[]>([])
+  const [cities, setCities] = useState<City[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
 
   const loadData = async () => {
     try {
-      const [companiesData, specializationsData] = await Promise.all([
+      const [companiesData, specializationsData, citiesData] = await Promise.all([
         getCompanies(),
         getSpecializations(),
+        getCities(),
       ])
       setCompanies(companiesData)
       setSpecializations(specializationsData)
+      setCities(citiesData)
     } catch (err) {
       console.error('Error loading data:', err)
     } finally {
@@ -82,8 +89,13 @@ export default function AdminPage() {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="container mx-auto px-4 py-6">
-          {/* Two Column Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Three Column Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            {/* Add City Form */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <AddCityForm onSuccess={loadData} />
+            </div>
+
             {/* Add Company Form */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold mb-4">Neues Unternehmen</h2>
@@ -97,9 +109,17 @@ export default function AdminPage() {
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold mb-4">Kartenvorschau</h2>
               <div className="h-[600px] rounded-lg overflow-hidden border">
-                <MapComponent companies={companies} />
+                <MapComponent companies={companies} cities={cities} />
               </div>
             </div>
+          </div>
+          
+          {/* Cities Table */}
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 className="text-xl font-bold mb-4">
+              Verwaltete Städte ({cities.length})
+            </h2>
+            <CityList cities={cities} />
           </div>
 
           {/* Companies Table */}

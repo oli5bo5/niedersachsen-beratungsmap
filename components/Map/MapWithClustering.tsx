@@ -30,22 +30,37 @@ const MarkerClusterGroup = dynamic(
 
 // Import CustomMarker separately
 import CustomMarker from './CustomMarker'
+import type { City } from '@/lib/types/city'
+import { CITY_CATEGORY_COLORS, CITY_CATEGORY_SIZES, CITY_CATEGORY_EMOJIS } from '@/lib/types/city'
 
 interface MapWithClusteringProps {
   companies: CompanyWithSpecializations[]
+  cities?: City[]
   selectedCompanyId?: string
   onMarkerClick?: (companyId: string) => void
+  onCityClick?: (cityId: string) => void
   enableClustering?: boolean
+  showCities?: boolean
 }
 
 export default function MapWithClustering({
   companies,
+  cities = [],
   selectedCompanyId,
   onMarkerClick,
+  onCityClick,
   enableClustering = true,
+  showCities = true,
 }: MapWithClusteringProps) {
   const [geojsonData, setGeojsonData] = useState<any>(null)
   const [map, setMap] = useState<any>(null)
+  const [L, setL] = useState<any>(null)
+  
+  useEffect(() => {
+    import('leaflet').then((leaflet) => {
+      setL(leaflet.default)
+    })
+  }, [])
 
   // Load GeoJSON data
   useEffect(() => {
@@ -156,6 +171,95 @@ export default function MapWithClustering({
           />
         )}
 
+        {/* City markers */}
+        {showCities && L && cities.map((city) => {
+          const Marker = require('react-leaflet').Marker
+          const Popup = require('react-leaflet').Popup
+          
+          const size = CITY_CATEGORY_SIZES[city.city_category]
+          const color = CITY_CATEGORY_COLORS[city.city_category]
+          const emoji = CITY_CATEGORY_EMOJIS[city.city_category]
+          
+          const cityIcon = L.divIcon({
+            className: 'custom-city-marker',
+            html: `
+              <div style="
+                width: ${size}px;
+                height: ${size}px;
+                background-color: ${color};
+                border: 2px solid white;
+                border-radius: 50%;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: ${size * 0.6}px;
+                z-index: 400;
+              ">
+                ${emoji}
+              </div>
+            `,
+            iconSize: [size, size],
+            iconAnchor: [size / 2, size / 2],
+          })
+          
+          const formatNumber = (value: number) => new Intl.NumberFormat('de-DE').format(value)
+          const formatCurrency = (value: number) => new Intl.NumberFormat('de-DE', {
+            style: 'currency',
+            currency: 'EUR',
+            minimumFractionDigits: 0,
+          }).format(value)
+          
+          return (
+            <Marker
+              key={city.id}
+              position={[city.latitude, city.longitude]}
+              icon={cityIcon}
+              eventHandlers={{ click: () => onCityClick?.(city.id) }}
+            >
+              <Popup>
+                <div className="p-3 min-w-[250px]">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-2xl">{emoji}</span>
+                    <h3 className="text-lg font-bold">{city.name}</h3>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <span
+                      className="inline-block px-2 py-1 rounded text-xs font-medium text-white"
+                      style={{ backgroundColor: color }}
+                    >
+                      {city.city_category}
+                    </span>
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t">
+                      <div>
+                        <p className="text-gray-500 text-xs">Einwohner</p>
+                        <p className="font-semibold">👥 {formatNumber(city.population)}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 text-xs">Digitalbudget</p>
+                        <p className="font-semibold">💶 {formatCurrency(city.digitalization_budget)}</p>
+                      </div>
+                    </div>
+                    {city.description && (
+                      <p className="text-gray-600 text-xs mt-2 pt-2 border-t">{city.description}</p>
+                    )}
+                    {city.website && (
+                      <a
+                        href={city.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline text-xs block mt-2"
+                      >
+                        🌐 Website →
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+          )
+        })}
+
         {/* Company markers with optional clustering */}
         {shouldCluster ? (
           <MarkerClusterGroup
@@ -185,6 +289,45 @@ export default function MapWithClustering({
           </>
         )}
       </MapContainer>
+      
+      {/* Legend */}
+      {showCities && (
+        <div className="absolute bottom-4 right-4 bg-white p-4 rounded-lg shadow-lg z-[1000] text-sm max-w-xs">
+          <h4 className="font-bold mb-2 text-gray-900">Legende</h4>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">💼</span>
+              <span className="text-gray-700">Beratungsunternehmen</span>
+            </div>
+            <div className="border-t pt-2 mt-2">
+              <p className="text-xs text-gray-500 mb-1">Städte:</p>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-4 h-4 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: CITY_CATEGORY_COLORS.Großstadt }}
+                  />
+                  <span className="text-xs text-gray-700">Großstadt (&gt; 100k)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-3 h-3 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: CITY_CATEGORY_COLORS.Mittelstadt }}
+                  />
+                  <span className="text-xs text-gray-700">Mittelstadt (20-100k)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: CITY_CATEGORY_COLORS.Kleinstadt }}
+                  />
+                  <span className="text-xs text-gray-700">Kleinstadt (&lt; 20k)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
