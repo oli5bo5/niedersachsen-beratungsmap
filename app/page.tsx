@@ -8,6 +8,7 @@ import type { CompanyWithSpecializations, Specialization } from '@/lib/supabase/
 import type { City } from '@/lib/types/city'
 import CompanyList from '@/components/Sidebar/CompanyList'
 import ExportButton from '@/components/Export/ExportButton'
+import { useCompanyFilters } from '@/hooks/useCompanyFilters'
 
 // Dynamic import for Map component (client-side only)
 const MapComponent = dynamic(
@@ -33,6 +34,16 @@ export default function Home() {
   const [showCities, setShowCities] = useState(true)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Use company filters hook
+  const {
+    filteredCompanies,
+    filterState,
+    setSearchQuery,
+    toggleSpecialization,
+    setSortBy,
+    clearFilters,
+  } = useCompanyFilters(companies)
 
   // Load data on mount
   useEffect(() => {
@@ -119,17 +130,23 @@ export default function Home() {
             specializations={specializations}
             selectedCompany={selectedCompanyId}
             onSelectCompany={setSelectedCompanyId}
+            filterState={filterState}
+            setSearchQuery={setSearchQuery}
+            toggleSpecialization={toggleSpecialization}
+            setSortBy={setSortBy}
+            clearFilters={clearFilters}
           />
         </aside>
 
         {/* Map - 70% width on desktop */}
         <main className="flex-1 relative">
           <MapComponent
-            companies={companies}
-            cities={cities}
+            companies={filteredCompanies}
+            allCities={cities}
             selectedCompanyId={selectedCompanyId}
             onMarkerClick={setSelectedCompanyId}
             showCities={showCities}
+            hasActiveFilters={filterState.selectedSpecializations.length > 0}
           />
         </main>
       </div>

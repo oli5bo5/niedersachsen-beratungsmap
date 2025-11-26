@@ -109,7 +109,7 @@ export default function AdminPage() {
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold mb-4">Kartenvorschau</h2>
               <div className="h-[600px] rounded-lg overflow-hidden border">
-                <MapComponent companies={companies} cities={cities} />
+                <MapComponent companies={companies} allCities={cities} />
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import type { CompanyWithSpecializations } from '@/lib/supabase/types'
 import MapLoading from './MapLoading'
@@ -35,22 +35,24 @@ import { CITY_CATEGORY_COLORS, CITY_CATEGORY_SIZES, CITY_CATEGORY_EMOJIS } from 
 
 interface MapWithClusteringProps {
   companies: CompanyWithSpecializations[]
-  cities?: City[]
+  allCities?: City[]
   selectedCompanyId?: string
   onMarkerClick?: (companyId: string) => void
   onCityClick?: (cityId: string) => void
   enableClustering?: boolean
   showCities?: boolean
+  hasActiveFilters?: boolean
 }
 
 export default function MapWithClustering({
   companies,
-  cities = [],
+  allCities = [],
   selectedCompanyId,
   onMarkerClick,
   onCityClick,
   enableClustering = true,
   showCities = true,
+  hasActiveFilters = false,
 }: MapWithClusteringProps) {
   const [geojsonData, setGeojsonData] = useState<any>(null)
   const [map, setMap] = useState<any>(null)
@@ -61,6 +63,24 @@ export default function MapWithClustering({
       setL(leaflet.default)
     })
   }, [])
+
+  // Filter cities based on companies when filters are active
+  const visibleCities = useMemo(() => {
+    if (!hasActiveFilters || companies.length === 0) {
+      // No filters active or no companies: show all cities
+      return allCities
+    }
+
+    // Get unique city names from filtered companies
+    const companyCityNames = new Set(
+      companies
+        .map(c => c.city)
+        .filter(Boolean)
+    )
+
+    // Return only cities that have at least one filtered company
+    return allCities.filter(city => companyCityNames.has(city.name))
+  }, [allCities, companies, hasActiveFilters])
 
   // Load GeoJSON data
   useEffect(() => {
@@ -172,7 +192,7 @@ export default function MapWithClustering({
         )}
 
         {/* City markers */}
-        {showCities && L && cities.map((city) => {
+        {showCities && L && visibleCities.map((city) => {
           const Marker = require('react-leaflet').Marker
           const Popup = require('react-leaflet').Popup
           

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import type { CompanyWithSpecializations, Specialization } from '@/lib/supabase/types'
+import type { CompanyWithSpecializations, Specialization, FilterState, SortOption } from '@/lib/supabase/types'
 import { useCompanyFilters } from '@/hooks/useCompanyFilters'
 import FilterPanel from './FilterPanel'
 
@@ -10,6 +10,12 @@ interface CompanyListProps {
   specializations: Specialization[]
   selectedCompany?: string
   onSelectCompany: (id: string) => void
+  // Filter props from parent
+  filterState: FilterState
+  setSearchQuery: (query: string) => void
+  toggleSpecialization: (id: string) => void
+  setSortBy: (sortBy: SortOption) => void
+  clearFilters: () => void
 }
 
 export default function CompanyList({
@@ -17,18 +23,57 @@ export default function CompanyList({
   specializations,
   selectedCompany,
   onSelectCompany,
+  filterState,
+  setSearchQuery: updateSearchQuery,
+  toggleSpecialization,
+  setSortBy,
+  clearFilters,
 }: CompanyListProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [isOpen, setIsOpen] = useState(true)
 
-  const {
-    filteredCompanies,
-    filterState,
-    setSearchQuery: updateSearchQuery,
-    toggleSpecialization,
-    setSortBy,
-    clearFilters,
-  } = useCompanyFilters(companies)
+  // Use the filter hook locally to get filtered companies for display
+  const { filteredCompanies } = useCompanyFilters(companies)
+
+  // Apply the filter state from parent
+  const displayCompanies = useMemo(() => {
+    let result = [...companies]
+
+    // Filter by search query
+    if (filterState.searchQuery) {
+      const query = filterState.searchQuery.toLowerCase()
+      result = result.filter(
+        (company) =>
+          company.name.toLowerCase().includes(query) ||
+          company.description?.toLowerCase().includes(query) ||
+          company.address?.toLowerCase().includes(query)
+      )
+    }
+
+    // Filter by specializations
+    if (filterState.selectedSpecializations.length > 0) {
+      result = result.filter((company) =>
+        company.specializations.some((spec) =>
+          filterState.selectedSpecializations.includes(spec.id)
+        )
+      )
+    }
+
+    // Sort
+    switch (filterState.sortBy) {
+      case 'alphabetical':
+        result.sort((a, b) => a.name.localeCompare(b.name))
+        break
+      case 'newest':
+        result.sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )
+        break
+    }
+
+    return result
+  }, [companies, filterState])
 
   // Debounced search
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,7 +115,7 @@ export default function CompanyList({
               Beratungsunternehmen
             </h2>
             <p className="text-sm text-gray-600">
-              {filteredCompanies.length} von {companies.length} Unternehmen
+              {displayCompanies.length} von {companies.length} Unternehmen
             </p>
           </div>
 
@@ -97,13 +142,13 @@ export default function CompanyList({
 
           {/* Company List */}
           <div className="flex-1 overflow-y-auto custom-scrollbar">
-            {filteredCompanies.length === 0 ? (
+            {displayCompanies.length === 0 ? (
               <div className="p-4 text-center text-gray-500">
                 Keine Unternehmen gefunden
               </div>
             ) : (
               <div className="p-2">
-                {filteredCompanies.map((company) => (
+                {displayCompanies.map((company) => (
                   <button
                     key={company.id}
                     onClick={() => onSelectCompany(company.id)}
