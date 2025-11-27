@@ -15,3 +15,5 @@ FROM information_schema.columns
 WHERE table_name = 'cities' 
   AND column_name IN ('population', 'digitalization_budget', 'city_category');
 
+
+

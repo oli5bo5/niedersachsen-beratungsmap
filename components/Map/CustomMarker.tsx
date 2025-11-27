@@ -89,3 +89,5 @@ export default function CustomMarker({ company, onClick }: CustomMarkerProps) {
   )
 }
 
+
+

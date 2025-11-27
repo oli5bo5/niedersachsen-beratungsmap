@@ -197,3 +197,5 @@ Die Vercel-App versucht, Daten aus `consulting_companies` zu laden, aber diese T
 
 **Führen Sie das SQL JETZT aus, dann funktioniert Ihre App! 🚀**
 
+
+

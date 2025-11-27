@@ -45,3 +45,5 @@ export function exportToGeoJSON(companies: CompanyWithSpecializations[]) {
   saveAs(blob, filename)
 }
 
+
+

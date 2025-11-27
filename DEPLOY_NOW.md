@@ -205,3 +205,5 @@ Um lokal mit echten Daten zu testen:
 
 Bei Fragen: Siehe `DEPLOYMENT.md` für Details oder `QUICK_START.md` für lokale Entwicklung.
 
+
+

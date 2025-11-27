@@ -496,3 +496,5 @@ const stats = await getCityStats()
 
 Bei Fragen: Siehe die anderen Dokumentationen (README.md, DEPLOYMENT.md, etc.)
 
+
+

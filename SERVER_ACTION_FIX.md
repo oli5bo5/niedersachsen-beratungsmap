@@ -298,3 +298,5 @@ Der Fehler ist behoben. Nach Vercel-Deploy:
 
 **Problem gelöst! 🚀**
 
+
+

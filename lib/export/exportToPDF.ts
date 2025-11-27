@@ -100,3 +100,5 @@ export function exportToPDF(companies: CompanyWithSpecializations[]) {
   doc.save(filename)
 }
 
+
+

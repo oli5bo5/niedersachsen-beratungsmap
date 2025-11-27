@@ -8,7 +8,7 @@ import type { CompanyWithSpecializations, Specialization } from '@/lib/supabase/
 import type { City } from '@/lib/types/city'
 import CompanyList from '@/components/Sidebar/CompanyList'
 import ExportButton from '@/components/Export/ExportButton'
-import AddCityModal from '@/components/Modal/AddCityModal'
+import AddCompanyModal from '@/components/Modal/AddCompanyModal'
 import CityDropdown from '@/components/Map/CityDropdown'
 import { useCompanyFilters } from '@/hooks/useCompanyFilters'
 
@@ -36,7 +36,7 @@ export default function Home() {
   const [showCities, setShowCities] = useState(true)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isAddCityModalOpen, setIsAddCityModalOpen] = useState(false)
+  const [isAddCompanyModalOpen, setIsAddCompanyModalOpen] = useState(false)
 
   // Use company filters hook
   const {
@@ -55,6 +55,11 @@ export default function Home() {
   const selectedCityObject = selectedCity 
     ? cities.find(c => c.name === selectedCity) || null
     : null
+
+  // Filter cities to only show those with companies (for CityDropdown)
+  const citiesWithCompanies = cities.filter(city => 
+    citiesWithCounts.some(cityWithCount => cityWithCount.city === city.name)
+  )
 
   // Load data on mount
   useEffect(() => {
@@ -81,8 +86,8 @@ export default function Home() {
     }
   }
 
-  const handleCityAdded = () => {
-    // Reload data to show new city
+  const handleCompanyAdded = () => {
+    // Reload data to show new company
     loadData()
   }
 
@@ -133,10 +138,10 @@ export default function Home() {
                 <span className="text-sm">🏙️ Städte anzeigen</span>
               </label>
               <button
-                onClick={() => setIsAddCityModalOpen(true)}
+                onClick={() => setIsAddCompanyModalOpen(true)}
                 className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
               >
-                + 🏙️ Stadt
+                + 🏢 Beratungsunternehmen
               </button>
               <ExportButton companies={companies} />
             </div>
@@ -166,11 +171,11 @@ export default function Home() {
 
         {/* Map - 70% width on desktop */}
         <main className="flex-1 relative">
-          {/* City Dropdown */}
-          {showCities && cities.length > 0 && (
+          {/* City Dropdown - Only cities with companies */}
+          {showCities && citiesWithCompanies.length > 0 && (
             <div className="absolute top-4 right-4 z-[1000] w-64">
               <CityDropdown 
-                cities={cities} 
+                cities={citiesWithCompanies} 
                 onCitySelect={(city) => setSelectedCity(city.name)} 
               />
             </div>
@@ -188,11 +193,12 @@ export default function Home() {
         </main>
       </div>
 
-      {/* Add City Modal */}
-      <AddCityModal
-        isOpen={isAddCityModalOpen}
-        onClose={() => setIsAddCityModalOpen(false)}
-        onSuccess={handleCityAdded}
+      {/* Add Company Modal */}
+      <AddCompanyModal
+        isOpen={isAddCompanyModalOpen}
+        onClose={() => setIsAddCompanyModalOpen(false)}
+        onSuccess={handleCompanyAdded}
+        specializations={specializations}
       />
     </div>
   )

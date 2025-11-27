@@ -66,7 +66,7 @@ export default function FilterPanel({
 
       {/* City Filter */}
       <div className="mb-4">
-        <p className="text-xs text-gray-600 mb-2">Standorte:</p>
+        <p className="text-xs text-gray-600 mb-2">Unternehmensübersicht:</p>
         <CityFilter
           cities={cities}
           selectedCity={selectedCity}

@@ -66,3 +66,5 @@ INSERT INTO cities (name, latitude, longitude, population, digitalization_budget
   ('Lüneburg', 53.2506, 10.4143, 77000, 3100000, 'Kleinstadt', 'Universitätsstadt mit nachhaltigem Digitalisierungskonzept', 'https://www.lueneburg.de')
 ON CONFLICT (name) DO NOTHING;
 
+
+

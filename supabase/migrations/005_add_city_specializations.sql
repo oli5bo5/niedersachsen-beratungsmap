@@ -49,3 +49,5 @@ COMMENT ON TABLE city_specializations IS 'Junction table linking cities to speci
 -- UPDATE cities SET specializations = ARRAY['Digitalisierung', 'Cloud-Migration'] WHERE name = 'Hannover';
 -- UPDATE cities SET specializations = ARRAY['KI-Beratung', 'Prozessoptimierung'] WHERE name = 'Wolfsburg';
 
+
+

@@ -94,3 +94,5 @@ WHERE schemaname = 'public'
   AND tablename IN ('consulting_companies', 'specializations', 'company_specializations', 'cities')
 ORDER BY tablename, policyname;
 
+
+

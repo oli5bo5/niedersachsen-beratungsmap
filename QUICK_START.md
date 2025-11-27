@@ -122,3 +122,5 @@ Siehe vollständige Anleitung in `DEPLOYMENT.md`
 - **Deployment:** Siehe `DEPLOYMENT.md`
 - **Datenbank:** SQL-Schema in `supabase/migrations/`
 
+
+

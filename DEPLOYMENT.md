@@ -233,3 +233,5 @@ Vercel erkennt den Push und führt automatisch ein neues Deployment durch.
 
 Bei Fragen oder Problemen: Prüfe die Vercel und Supabase Logs!
 
+
+

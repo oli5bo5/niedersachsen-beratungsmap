@@ -197,3 +197,5 @@ Nach dem erfolgreichen Seeding:
 
 Ihre App ist jetzt **komplett einsatzbereit** mit echten Beispieldaten! 🚀
 
+
+
