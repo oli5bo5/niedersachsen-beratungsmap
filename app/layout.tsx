@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
+import PerformanceMonitor from '@/components/PerformanceMonitor'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -36,10 +37,12 @@ export default function RootLayout({
         <link rel="preconnect" href="https://a.basemaps.cartocdn.com" />
         <link rel="preconnect" href="https://b.basemaps.cartocdn.com" />
         <link rel="preconnect" href="https://c.basemaps.cartocdn.com" />
+        <link rel="dns-prefetch" href="https://nominatim.openstreetmap.org" />
       </head>
       <body className="font-sans antialiased">
         <Providers>
           {children}
+          {process.env.NODE_ENV === 'development' && <PerformanceMonitor />}
         </Providers>
       </body>
     </html>

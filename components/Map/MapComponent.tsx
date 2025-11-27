@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import type { CompanyWithSpecializations } from '@/lib/supabase/types'
 import MapLoading from './MapLoading'
+import { MAP_CONFIG } from '@/lib/map-config'
 
 // Dynamically import Leaflet components (client-side only) with loading component
 const MapContainer = dynamic(
@@ -112,15 +113,14 @@ export default function MapComponent({
     }
   }, [map, selectedCompanyId, companies])
 
-  // Hannover center coordinates
-  const center: [number, number] = [52.3759, 9.732]
-  const zoom = 7.5
-
   return (
     <div className="h-full w-full relative">
       <MapContainer
-        center={center}
-        zoom={zoom}
+        center={MAP_CONFIG.defaults.center}
+        zoom={MAP_CONFIG.defaults.zoom}
+        minZoom={MAP_CONFIG.defaults.minZoom}
+        maxZoom={MAP_CONFIG.defaults.maxZoom}
+        preferCanvas={MAP_CONFIG.performance.preferCanvas}
         className="h-full w-full"
         ref={setMap}
       >
@@ -232,37 +232,65 @@ export default function MapComponent({
 
         {/* Company markers with clustering */}
         <MarkerClusterGroup
-          chunkedLoading
-          spiderfyOnMaxZoom={true}
+          chunkedLoading={MAP_CONFIG.clustering.chunkedLoading}
+          spiderfyOnMaxZoom={MAP_CONFIG.clustering.enabled}
           showCoverageOnHover={false}
           zoomToBoundsOnClick={true}
-          maxClusterRadius={60}
+          maxClusterRadius={MAP_CONFIG.clustering.maxClusterRadius}
+          disableClusteringAtZoom={MAP_CONFIG.clustering.disableClusteringAtZoom}
+          animate={MAP_CONFIG.clustering.animate}
+          animateAddingMarkers={MAP_CONFIG.clustering.animateAddingMarkers}
+          spiderfyDistanceMultiplier={MAP_CONFIG.clustering.spiderfyDistanceMultiplier}
           iconCreateFunction={(cluster: any) => {
             if (!L) return undefined
             const count = cluster.getChildCount()
-            const size = count < 10 ? 40 : count < 50 ? 50 : 60
+            
+            // Dynamische Größe basierend auf Anzahl
+            let size = 40
+            let className = 'cluster-small'
+            
+            if (count >= 50) {
+              size = 70
+              className = 'cluster-large'
+            } else if (count >= 20) {
+              size = 55
+              className = 'cluster-medium'
+            }
             
             return L.divIcon({
               html: `
-                <div style="
-                  background: linear-gradient(135deg, #8B5CF6, #3B82F6);
+                <div class="cluster-marker ${className}" style="
+                  background: linear-gradient(135deg, #8B5CF6 0%, #3B82F6 100%);
                   color: white;
                   border-radius: 50%;
                   width: ${size}px;
                   height: ${size}px;
                   display: flex;
                   align-items: center;
-                  justify-content: center;
-                  font-weight: bold;
-                  font-size: ${count < 10 ? '14px' : '16px'};
-                  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
-                  border: 3px solid white;
-                  transition: all 0.3s;
+                  justify-center;
+                  font-weight: 700;
+                  font-size: ${count < 10 ? '14px' : count < 50 ? '16px' : '18px'};
+                  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4), 
+                              0 4px 12px rgba(0, 0, 0, 0.1),
+                              inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+                  border: ${count >= 50 ? '5px' : count >= 20 ? '4px' : '3px'} solid white;
+                  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                  position: relative;
+                  overflow: hidden;
                 ">
-                  ${count}
+                  <span style="position: relative; z-index: 2;">${count}</span>
+                  <div style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.3) 0%, transparent 60%);
+                    z-index: 1;
+                  "></div>
                 </div>
               `,
-              className: 'marker-cluster',
+              className: 'custom-cluster-icon',
               iconSize: [size, size],
             })
           }}
