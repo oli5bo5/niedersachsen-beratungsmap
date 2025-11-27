@@ -42,14 +42,14 @@ export default function Sidebar({ className }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'glass-panel fixed left-0 top-0 z-40 h-screen transition-all duration-300',
+        'bg-white border-r border-gray-200 shadow-lg fixed left-0 top-0 z-40 h-screen transition-all duration-300',
         collapsed ? 'w-16' : 'w-64',
         className
       )}
     >
       <div className="flex h-full flex-col">
         {/* Logo & Title */}
-        <div className="flex h-16 items-center justify-between px-4 border-b border-border/40">
+        <div className="flex h-16 items-center justify-between px-4 border-b border-gray-200">
           {!collapsed && (
             <div className="flex items-center gap-2">
               <Map className="h-6 w-6 text-primary" />

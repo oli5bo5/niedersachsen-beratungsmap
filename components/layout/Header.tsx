@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import ThemeToggle from './ThemeToggle'
 
 interface HeaderProps {
   onSearchClick?: () => void
@@ -19,16 +18,16 @@ interface HeaderProps {
 
 export default function Header({ onSearchClick }: HeaderProps) {
   return (
-    <header className="glass-card sticky top-0 z-30 h-16 border-b border-border/40">
+    <header className="bg-white sticky top-0 z-30 h-16 border-b border-gray-200 shadow-sm">
       <div className="flex h-full items-center justify-between px-6">
         {/* Search */}
         <div className="flex flex-1 items-center max-w-md">
           <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
             <Input
               type="search"
               placeholder="Suche (Strg+K)..."
-              className="w-full pl-10 pr-4"
+              className="w-full pl-10 pr-4 bg-white border-gray-300"
               onClick={onSearchClick}
               readOnly
             />
@@ -37,8 +36,6 @@ export default function Header({ onSearchClick }: HeaderProps) {
 
         {/* Right Section */}
         <div className="flex items-center gap-3">
-          {/* Dark Mode Toggle */}
-          <ThemeToggle />
 
           {/* User Menu */}
           <DropdownMenu>
