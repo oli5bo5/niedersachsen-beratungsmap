@@ -73,9 +73,12 @@ export default function HomePage() {
             
             <ThemeToggle />
             
-            <button className="hidden sm:block frameio-button text-sm px-4 py-2">
+            <a 
+              href="/admin"
+              className="hidden sm:block bg-frameio-primary hover:bg-frameio-primary-hover text-white font-semibold text-sm px-6 py-2 rounded-full shadow-lg transition-all"
+            >
               Admin
-            </button>
+            </a>
             
             <button 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -112,9 +115,12 @@ export default function HomePage() {
                                hover:bg-secondary/50 transition-colors font-medium">
                 Städte
               </button>
-              <button className="w-full frameio-button mt-2">
+              <a 
+                href="/admin"
+                className="w-full bg-frameio-primary hover:bg-frameio-primary-hover text-white font-semibold px-6 py-3 rounded-full shadow-lg transition-all mt-2 text-center block"
+              >
                 Admin
-              </button>
+              </a>
             </div>
           </motion.div>
         )}
