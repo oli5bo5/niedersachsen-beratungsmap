@@ -254,14 +254,14 @@ export default function AddCompanyForm({
         </label>
         <div className="space-y-2">
           {specializations.map((spec) => (
-            <label key={spec.id} className="flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded">
+            <label key={spec.id} className="flex items-center cursor-pointer hover:bg-blue-50 p-2 border border-gray-300 bg-white rounded">
               <input
                 type="checkbox"
                 value={spec.id}
                 {...register('specialization_ids')}
                 className="mr-2"
               />
-              <span className="text-sm">
+              <span className="text-sm text-gray-900">
                 {spec.icon} {spec.name}
               </span>
               <span
