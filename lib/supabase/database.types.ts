@@ -1,9 +1,3 @@
-/**
- * Database type definitions for Supabase
- * This file would normally be generated using: npx supabase gen types typescript
- * For now, we provide a manual type definition
- */
-
 export type Json =
   | string
   | number
@@ -19,39 +13,51 @@ export interface Database {
         Row: {
           id: string
           name: string
-          description: string | null
+          city: string
           address: string | null
-          latitude: number | null
-          longitude: number | null
+          lat: number
+          lng: number
           website: string | null
-          email: string | null
           phone: string | null
+          email: string | null
+          description: string | null
+          logo_url: string | null
+          employee_count: number | null
+          founded_year: number | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           name: string
-          description?: string | null
+          city: string
           address?: string | null
-          latitude?: number | null
-          longitude?: number | null
+          lat: number
+          lng: number
           website?: string | null
-          email?: string | null
           phone?: string | null
+          email?: string | null
+          description?: string | null
+          logo_url?: string | null
+          employee_count?: number | null
+          founded_year?: number | null
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           name?: string
-          description?: string | null
+          city?: string
           address?: string | null
-          latitude?: number | null
-          longitude?: number | null
+          lat?: number
+          lng?: number
           website?: string | null
-          email?: string | null
           phone?: string | null
+          email?: string | null
+          description?: string | null
+          logo_url?: string | null
+          employee_count?: number | null
+          founded_year?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -60,20 +66,26 @@ export interface Database {
         Row: {
           id: string
           name: string
-          icon: string
+          icon: string | null
           color: string
+          description: string | null
+          created_at: string
         }
         Insert: {
           id?: string
           name: string
-          icon: string
-          color: string
+          icon?: string | null
+          color?: string
+          description?: string | null
+          created_at?: string
         }
         Update: {
           id?: string
           name?: string
-          icon?: string
+          icon?: string | null
           color?: string
+          description?: string | null
+          created_at?: string
         }
       }
       company_specializations: {
@@ -96,18 +108,47 @@ export interface Database {
           created_at?: string
         }
       }
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      [_ in never]: never
-    }
-    Enums: {
-      [_ in never]: never
+      cities: {
+        Row: {
+          id: string
+          name: string
+          latitude: number
+          longitude: number
+          population: number
+          digitalization_budget: number
+          city_category: string
+          description: string | null
+          website: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          latitude: number
+          longitude: number
+          population?: number
+          digitalization_budget?: number
+          city_category?: string
+          description?: string | null
+          website?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          latitude?: number
+          longitude?: number
+          population?: number
+          digitalization_budget?: number
+          city_category?: string
+          description?: string | null
+          website?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
   }
 }
-
-
-
