@@ -1,137 +1,129 @@
 'use client'
 
-import { Building2, MapPin, ExternalLink, Info } from 'lucide-react'
-import { Card, CardContent, CardFooter } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { cn } from '@/lib/utils'
+import { motion } from 'framer-motion'
+import { MapPin, Heart, Eye, ArrowRight, ExternalLink } from 'lucide-react'
 import type { CompanyWithSpecializations } from '@/lib/supabase/types'
 
 interface CompanyCardProps {
   company: CompanyWithSpecializations
-  onShowOnMap?: () => void
-  onShowDetails?: () => void
-  selected?: boolean
-  className?: string
+  onShowOnMap?: (companyId: string) => void
+  onFavorite?: (companyId: string) => void
+  isFavorite?: boolean
 }
 
-export default function CompanyCard({
-  company,
+export default function CompanyCard({ 
+  company, 
   onShowOnMap,
-  onShowDetails,
-  selected,
-  className,
+  onFavorite,
+  isFavorite = false 
 }: CompanyCardProps) {
-  // Get initials for avatar
-  const initials = company.name
-    .split(' ')
-    .map((word) => word[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
-
-  // Get visible specializations (max 3)
-  const visibleSpecs = company.specializations?.slice(0, 3) || []
-  const remainingCount = (company.specializations?.length || 0) - 3
-
   return (
-    <Card
-      className={cn(
-        'group transition-all duration-300 hover:shadow-xl hover:scale-[1.02] cursor-pointer',
-        selected && 'ring-2 ring-primary shadow-xl scale-[1.02]',
-        className
-      )}
-      onClick={onShowDetails}
+    <motion.div
+      whileHover={{ y: -8, scale: 1.02 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className="frameio-card group cursor-pointer relative overflow-hidden"
     >
-      <CardContent className="p-4">
-        {/* Header with Avatar */}
-        <div className="flex items-start gap-3 mb-3">
-          <Avatar className="h-12 w-12 border-2 border-border">
-            <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
-              {company.name}
-            </h3>
-            {company.city && (
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <MapPin className="h-3 w-3" />
-                <span>{company.city}</span>
-              </div>
-            )}
+      {/* Gradient Overlay on Hover */}
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 
+                      opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      
+      <div className="relative z-10 space-y-4">
+        {/* Company Header */}
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            {/* Avatar with Gradient */}
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 
+                            flex items-center justify-center text-white text-xl font-bold 
+                            shadow-[0_8px_20px_rgba(99,102,241,0.3)] flex-shrink-0">
+              {company.name.charAt(0)}
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-lg font-semibold group-hover:gradient-text transition-all duration-300 truncate">
+                {company.name}
+              </h3>
+              {company.city && (
+                <p className="text-sm text-muted-foreground flex items-center gap-1 truncate">
+                  <MapPin className="w-3 h-3 flex-shrink-0" />
+                  {company.city}
+                </p>
+              )}
+            </div>
           </div>
+          
+          {/* Favorite Button */}
+          {onFavorite && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onFavorite(company.id)
+              }}
+              className="p-2 rounded-xl hover:bg-secondary/50 transition-colors flex-shrink-0"
+            >
+              <Heart 
+                className={`w-4 h-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`} 
+              />
+            </button>
+          )}
         </div>
-
+        
         {/* Description */}
         {company.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+          <p className="text-sm text-muted-foreground line-clamp-2">
             {company.description}
           </p>
         )}
-
+        
         {/* Specializations */}
-        {visibleSpecs.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {visibleSpecs.map((spec) => (
-              <Badge
+        {company.specializations && company.specializations.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {company.specializations.slice(0, 3).map(spec => (
+              <span 
                 key={spec.id}
-                variant="secondary"
-                className="text-xs"
-                style={{
-                  backgroundColor: `${spec.color}15`,
-                  color: spec.color,
-                  borderColor: `${spec.color}30`,
-                }}
+                className="frameio-badge"
               >
-                <span className="mr-1">{spec.icon}</span>
+                <span className="text-base mr-1">{spec.icon}</span>
                 {spec.name}
-              </Badge>
+              </span>
             ))}
-            {remainingCount > 0 && (
-              <Badge variant="outline" className="text-xs">
-                +{remainingCount} mehr
-              </Badge>
+            {company.specializations.length > 3 && (
+              <span className="frameio-badge">
+                +{company.specializations.length - 3} mehr
+              </span>
             )}
           </div>
         )}
-      </CardContent>
-
-      <CardFooter className="p-4 pt-0 flex gap-2">
-        <Button
-          size="sm"
-          variant="outline"
-          className="flex-1"
-          onClick={(e) => {
-            e.stopPropagation()
-            onShowOnMap?.()
-          }}
-        >
-          <MapPin className="h-4 w-4 mr-1" />
-          Auf Karte
-        </Button>
-        {company.website && (
-          <Button
-            size="sm"
-            variant="ghost"
-            asChild
-            onClick={(e) => e.stopPropagation()}
-          >
+        
+        {/* Action Footer */}
+        <div className="flex items-center justify-between pt-2 border-t border-border/50">
+          {company.website && (
             <a
               href={company.website}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center"
+              onClick={(e) => e.stopPropagation()}
+              className="text-sm text-muted-foreground hover:text-foreground 
+                       flex items-center gap-2 transition-colors"
             >
-              <ExternalLink className="h-4 w-4" />
+              <ExternalLink className="w-4 h-4" />
+              Website
             </a>
-          </Button>
-        )}
-      </CardFooter>
-    </Card>
+          )}
+          
+          {onShowOnMap && (
+            <button 
+              onClick={(e) => {
+                e.stopPropagation()
+                onShowOnMap(company.id)
+              }}
+              className="text-sm font-medium text-primary flex items-center gap-2 
+                       hover:gap-3 transition-all group/btn"
+            >
+              Auf Karte zeigen
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+    </motion.div>
   )
 }
-

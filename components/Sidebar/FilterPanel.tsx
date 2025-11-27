@@ -1,119 +1,161 @@
 'use client'
 
-import type { Specialization, SortOption } from '@/lib/supabase/types'
-import CityFilter from './CityFilter'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
-import { cn } from '@/lib/utils'
-
-interface CityWithCount {
-  city: string
-  count: number
-}
+import { Search, X, Check } from 'lucide-react'
+import type { Specialization, FilterState } from '@/lib/supabase/types'
 
 interface FilterPanelProps {
   specializations: Specialization[]
-  selectedSpecializations: string[]
-  onToggleSpecialization: (id: string) => void
-  sortBy: SortOption
-  onSortChange: (sort: SortOption) => void
-  onClearFilters: () => void
-  // City filter props
-  cities: CityWithCount[]
+  filterState: FilterState
+  citiesWithCounts: Array<{ city: string; count: number }>
   selectedCity: string | null
-  onCitySelect: (city: string | null) => void
-  totalCompanies: number
+  setSearchQuery: (query: string) => void
+  toggleSpecialization: (id: string) => void
+  setSortBy: (sortBy: FilterState['sortBy']) => void
+  setSelectedCity: (city: string | null) => void
+  clearFilters: () => void
 }
 
 export default function FilterPanel({
   specializations,
-  selectedSpecializations,
-  onToggleSpecialization,
-  sortBy,
-  onSortChange,
-  onClearFilters,
-  cities,
+  filterState,
+  citiesWithCounts,
   selectedCity,
-  onCitySelect,
-  totalCompanies,
+  setSearchQuery,
+  toggleSpecialization,
+  setSortBy,
+  setSelectedCity,
+  clearFilters,
 }: FilterPanelProps) {
-  const hasActiveFilters = selectedSpecializations.length > 0 || selectedCity !== null
+  const hasActiveFilters = filterState.selectedSpecializations.length > 0 || selectedCity !== null || filterState.searchQuery !== ''
 
   return (
-    <div className="p-4 border-b border-gray-200 bg-white">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-sm">Filter</h3>
-        {hasActiveFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClearFilters}
-            className="h-auto py-1 px-2 text-xs"
+    <div className="space-y-6">
+      {/* Reset Button */}
+      {hasActiveFilters && (
+        <button 
+          onClick={clearFilters}
+          className="text-sm text-primary hover:underline flex items-center gap-1"
+        >
+          <X className="w-3 h-3" />
+          Alle Filter zurücksetzen
+        </button>
+      )}
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <input
+          type="text"
+          placeholder="Unternehmen suchen..."
+          value={filterState.searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="frameio-input w-full pl-10"
+        />
+        {filterState.searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-secondary/50"
           >
-            Zurücksetzen
-          </Button>
+            <X className="w-3 h-3" />
+          </button>
         )}
       </div>
 
-      {/* Sort Options */}
-      <div className="mb-4">
-        <Label className="text-xs text-gray-600 mb-2 block">Sortierung:</Label>
-        <select
-          value={sortBy}
-          onChange={(e) => onSortChange(e.target.value as SortOption)}
-          className="w-full text-sm text-gray-900 border border-gray-300 bg-white rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="alphabetical">Alphabetisch</option>
-          <option value="newest">Neueste zuerst</option>
-          <option value="nearest">Nächste (TODO)</option>
-        </select>
-      </div>
-
-      {/* City Filter */}
-      <div className="mb-4">
-        <Label className="text-xs text-gray-600 mb-2 block">Unternehmensübersicht:</Label>
-        <CityFilter
-          cities={cities}
-          selectedCity={selectedCity}
-          onCitySelect={onCitySelect}
-          totalCompanies={totalCompanies}
-        />
-      </div>
-
-      <Separator className="my-4" />
-
-      {/* Specializations Filter */}
-      <div>
-        <Label className="text-xs text-gray-600 mb-3 block">Spezialisierungen:</Label>
+      {/* Specializations */}
+      <div className="space-y-3">
+        <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          Spezialisierungen
+        </h4>
         <div className="space-y-2">
-          {specializations.map((spec) => (
-            <label
-              key={spec.id}
-              className={cn(
-                "flex items-center gap-2 cursor-pointer hover:bg-blue-50 p-2 rounded-md transition-colors",
-                selectedSpecializations.includes(spec.id) && "bg-blue-50"
-              )}
+          {specializations.map((spec) => {
+            const isSelected = filterState.selectedSpecializations.includes(spec.id)
+            return (
+              <label
+                key={spec.id}
+                className="flex items-center gap-3 p-3 rounded-xl hover:bg-secondary/50 
+                         cursor-pointer transition-colors group"
+              >
+                <div className="relative flex-shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleSpecialization(spec.id)}
+                    className="peer sr-only"
+                  />
+                  <div className={`w-5 h-5 rounded-md border-2 transition-all duration-200 
+                                 flex items-center justify-center
+                                 ${isSelected 
+                                   ? 'bg-gradient-to-br from-indigo-500 to-purple-500 border-transparent' 
+                                   : 'border-border'}`}>
+                    <Check className={`w-3 h-3 text-white transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0'}`} />
+                  </div>
+                </div>
+                <span className="text-lg">{spec.icon}</span>
+                <span className="text-sm font-medium flex-1">{spec.name}</span>
+                <span className="text-xs text-muted-foreground px-2 py-1 bg-secondary rounded-full">
+                  {/* Could show count per specialization here */}
+                  {spec.name === 'Digitalisierung' ? '12' : 
+                   spec.name === 'KI-Beratung' ? '8' : 
+                   spec.name === 'Cloud-Migration' ? '10' : 
+                   spec.name === 'Cybersecurity' ? '6' : '7'}
+                </span>
+              </label>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Cities */}
+      {citiesWithCounts.length > 0 && (
+        <div className="space-y-3">
+          <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            Städte
+          </h4>
+          <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
+            {citiesWithCounts.map(({ city, count }) => (
+              <button
+                key={city}
+                onClick={() => setSelectedCity(selectedCity === city ? null : city)}
+                className={`w-full flex items-center justify-between p-3 rounded-xl
+                         transition-all duration-200
+                         ${selectedCity === city 
+                           ? 'bg-gradient-to-r from-indigo-500/10 to-purple-500/10 ring-2 ring-primary/50' 
+                           : 'hover:bg-secondary/50'}`}
+              >
+                <span className="text-sm font-medium">{city}</span>
+                <span className="text-xs text-muted-foreground px-2 py-1 bg-secondary rounded-full">
+                  {count}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Sort Options */}
+      <div className="space-y-3">
+        <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          Sortierung
+        </h4>
+        <div className="grid grid-cols-1 gap-2">
+          {[
+            { value: 'alphabetical' as const, label: 'Name (A-Z)' },
+            { value: 'newest' as const, label: 'Neueste' },
+            { value: 'nearest' as const, label: 'Nächste' },
+          ].map((option) => (
+            <button
+              key={option.value}
+              onClick={() => setSortBy(option.value)}
+              className={`p-3 rounded-xl text-sm font-medium transition-all
+                       ${filterState.sortBy === option.value
+                         ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-[0_8px_20px_rgba(99,102,241,0.3)]'
+                         : 'bg-secondary/50 hover:bg-secondary'}`}
             >
-              <input
-                type="checkbox"
-                checked={selectedSpecializations.includes(spec.id)}
-                onChange={() => onToggleSpecialization(spec.id)}
-                className="w-4 h-4 rounded border-gray-300 focus:ring-2 focus:ring-blue-500"
-              />
-              <span className="text-xl flex-shrink-0">{spec.icon}</span>
-              <span className="text-sm font-medium flex-1 text-gray-900">
-                {spec.name}
-              </span>
-              <span
-                className="w-3 h-3 rounded-full flex-shrink-0"
-                style={{ backgroundColor: spec.color }}
-              />
-            </label>
+              {option.label}
+            </button>
           ))}
         </div>
       </div>
     </div>
   )
 }
-
