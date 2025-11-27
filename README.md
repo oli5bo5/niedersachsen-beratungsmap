@@ -1,95 +1,49 @@
-# Niedersachsen Beratungsunternehmen Map
+# Niedersachsen Beratungsmap
 
-Eine interaktive Karte zur Visualisierung von Beratungsunternehmen in Niedersachsen mit Fokus auf Digitalisierung, KI, Cloud-Migration und weitere Spezialisierungen.
-
-## Tech Stack
-
-- **Frontend:** Next.js 14 (App Router) + React + TypeScript
-- **Karte:** React Leaflet (Open Source)
-- **Datenbank:** Supabase (PostgreSQL)
-- **Styling:** Tailwind CSS
-- **Deployment:** Vercel
+Eine interaktive Karte zur Visualisierung von Beratungsunternehmen in Niedersachsen.
 
 ## Features
 
-- ✅ Interaktive Leaflet-Karte mit Niedersachsen-Grenze
-- ✅ Dynamische Marker für Beratungsunternehmen
-- ✅ Filter nach Spezialisierungen
-- ✅ Suchfunktion
-- ✅ Admin-Panel zum Hinzufügen/Bearbeiten von Firmen
-- ✅ Geocoding-Integration (Adresse → Koordinaten)
-- ✅ Export-Funktionen (CSV, GeoJSON, PDF)
-- ✅ Map Clustering bei vielen Markern
-- ✅ Responsive Design (Desktop & Mobile)
+- 🗺️ Interaktive Karte mit Marker Clustering
+- 💼 Verwaltung von Beratungsunternehmen
+- 🎨 Frame.io-inspiriertes Design
+- ⚡ Performance-optimiert mit React Query
+- 📱 Voll responsiv
 
-## Getting Started
+## Tech Stack
 
-### 1. Installation
+- Next.js 14 (App Router)
+- TypeScript
+- Supabase (Database)
+- React Leaflet (Maps)
+- Tailwind CSS
+- Framer Motion (Animations)
+- React Query (Data Fetching & Caching)
 
-```bash
-npm install
-```
+## Setup
 
-### 2. Environment Variables
+1. Clone Repository
+2. `npm install`
+3. Erstelle `.env.local` mit Supabase Keys
+4. `npm run dev`
 
-Erstelle eine `.env.local` Datei basierend auf `.env.local.example`:
+## Supabase Setup
 
-```bash
-NEXT_PUBLIC_SUPABASE_URL=your-project-url.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
-```
-
-### 3. Supabase Setup
-
-1. Erstelle ein neues Supabase Projekt
-2. Führe das SQL-Schema aus: `supabase/migrations/001_initial_schema.sql`
-3. Kopiere die URL und den Anon Key in `.env.local`
-
-### 4. Niedersachsen GeoJSON herunterladen
-
-```bash
-npm run download-map
-```
-
-### 5. Development Server starten
-
-```bash
-npm run dev
-```
-
-Öffne [http://localhost:3000](http://localhost:3000) im Browser.
-
-## Projektstruktur
-
-```
-niedersachsen-beratungsmap/
-├── app/                      # Next.js App Router
-│   ├── page.tsx             # Main Page
-│   ├── layout.tsx           # Root Layout
-│   ├── admin/               # Admin Panel
-│   ├── api/                 # API Routes
-│   └── actions/             # Server Actions
-├── components/              # React Components
-│   ├── Map/                 # Leaflet Map Components
-│   ├── Sidebar/             # Sidebar Components
-│   ├── Admin/               # Admin Components
-│   └── Export/              # Export Components
-├── lib/                     # Utilities & Helpers
-│   ├── supabase/            # Supabase Client & Types
-│   └── export/              # Export Functions
-├── hooks/                   # Custom React Hooks
-├── public/                  # Static Assets
-│   └── maps/                # GeoJSON Files
-└── supabase/                # Database Migrations
-```
+Siehe `SUPABASE_SETUP.md` für detaillierte Anweisungen.
 
 ## Deployment
 
-Siehe [DEPLOYMENT.md](./DEPLOYMENT.md) für detaillierte Deployment-Anweisungen.
+Deployed auf Vercel: [niedersachsen-beratungsmap.vercel.app](https://niedersachsen-beratungsmap.vercel.app)
+
+## Performance
+
+- Initial Load: < 2s
+- Time to Interactive: < 2.5s
+- 60 FPS Animations
+- React Query Caching
+- Marker Clustering
+- Virtualized Lists
 
 ## License
 
 MIT
-
-
-
