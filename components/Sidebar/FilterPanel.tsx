@@ -2,6 +2,10 @@
 
 import type { Specialization, SortOption } from '@/lib/supabase/types'
 import CityFilter from './CityFilter'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { Separator } from '@/components/ui/separator'
+import { cn } from '@/lib/utils'
 
 interface CityWithCount {
   city: string
@@ -37,26 +41,28 @@ export default function FilterPanel({
   const hasActiveFilters = selectedSpecializations.length > 0 || selectedCity !== null
 
   return (
-    <div className="p-4 border-b bg-gray-50">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-sm text-gray-700">Filter</h3>
+    <div className="p-4 border-b border-border bg-muted/30">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold text-sm">Filter</h3>
         {hasActiveFilters && (
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onClearFilters}
-            className="text-xs text-blue-600 hover:text-blue-800"
+            className="h-auto py-1 px-2 text-xs"
           >
-            Alle zurücksetzen
-          </button>
+            Zurücksetzen
+          </Button>
         )}
       </div>
 
       {/* Sort Options */}
       <div className="mb-4">
-        <p className="text-xs text-gray-600 mb-2">Sortierung:</p>
+        <Label className="text-xs text-muted-foreground mb-2 block">Sortierung:</Label>
         <select
           value={sortBy}
           onChange={(e) => onSortChange(e.target.value as SortOption)}
-          className="w-full text-sm border rounded px-2 py-1"
+          className="w-full text-sm border border-input bg-background rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="alphabetical">Alphabetisch</option>
           <option value="newest">Neueste zuerst</option>
@@ -66,7 +72,7 @@ export default function FilterPanel({
 
       {/* City Filter */}
       <div className="mb-4">
-        <p className="text-xs text-gray-600 mb-2">Unternehmensübersicht:</p>
+        <Label className="text-xs text-muted-foreground mb-2 block">Unternehmensübersicht:</Label>
         <CityFilter
           cities={cities}
           selectedCity={selectedCity}
@@ -75,26 +81,32 @@ export default function FilterPanel({
         />
       </div>
 
+      <Separator className="my-4" />
+
       {/* Specializations Filter */}
       <div>
-        <p className="text-xs text-gray-600 mb-2">Spezialisierungen:</p>
+        <Label className="text-xs text-muted-foreground mb-3 block">Spezialisierungen:</Label>
         <div className="space-y-2">
           {specializations.map((spec) => (
             <label
               key={spec.id}
-              className="flex items-center cursor-pointer hover:bg-gray-100 p-1 rounded"
+              className={cn(
+                "flex items-center gap-2 cursor-pointer hover:bg-accent p-2 rounded-md transition-colors",
+                selectedSpecializations.includes(spec.id) && "bg-accent/50"
+              )}
             >
               <input
                 type="checkbox"
                 checked={selectedSpecializations.includes(spec.id)}
                 onChange={() => onToggleSpecialization(spec.id)}
-                className="mr-2"
+                className="w-4 h-4 rounded border-input focus:ring-2 focus:ring-ring"
               />
-              <span className="text-sm">
-                {spec.icon} {spec.name}
+              <span className="text-xl flex-shrink-0">{spec.icon}</span>
+              <span className="text-sm font-medium flex-1">
+                {spec.name}
               </span>
               <span
-                className="ml-auto w-3 h-3 rounded-full"
+                className="w-3 h-3 rounded-full flex-shrink-0"
                 style={{ backgroundColor: spec.color }}
               />
             </label>
