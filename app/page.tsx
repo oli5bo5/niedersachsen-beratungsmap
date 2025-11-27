@@ -124,38 +124,36 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-secondary/10">
+    <div className="min-h-screen flex flex-col bg-frameio-bg-secondary">
       
       {/* Frame.io Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 
-                      bg-background/80 backdrop-blur-xl 
-                      border-b border-border/50">
+      <nav className="fixed top-0 left-0 right-0 z-50 frameio-glass border-b border-frameio-border">
         <div className="container mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           
           {/* Logo + Brand */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 
-                            rounded-2xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-frameio-primary to-frameio-accent-purple 
+                            rounded-2xl flex items-center justify-center shadow-lg">
               <MapIcon className="w-6 h-6 text-white" />
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-lg font-bold">Niedersachsen</h1>
-              <p className="text-xs text-muted-foreground">Beratungsmap</p>
+              <h1 className="text-lg font-bold text-frameio-text-primary">Niedersachsen</h1>
+              <p className="text-xs text-frameio-text-secondary">Beratungsmap</p>
             </div>
           </div>
           
           {/* Desktop Stats */}
           <div className="hidden md:flex items-center gap-6 text-sm">
             <div className="flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-indigo-500" />
-              <span className="font-semibold">{companies.length}</span>
-              <span className="text-muted-foreground">Unternehmen</span>
+              <Building2 className="w-4 h-4 text-frameio-primary" />
+              <span className="font-semibold text-frameio-text-primary">{companies.length}</span>
+              <span className="text-frameio-text-secondary">Unternehmen</span>
             </div>
-            <div className="w-px h-6 bg-border" />
+            <div className="w-px h-6 bg-frameio-border" />
             <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-purple-500" />
-              <span className="font-semibold">{cities.length}</span>
-              <span className="text-muted-foreground">Städte</span>
+              <MapPin className="w-4 h-4 text-frameio-accent-purple" />
+              <span className="font-semibold text-frameio-text-primary">{cities.length}</span>
+              <span className="text-frameio-text-secondary">Städte</span>
             </div>
           </div>
           
@@ -163,9 +161,9 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <button 
               onClick={() => setShowFilters(!showFilters)}
-              className={`frameio-card px-4 py-2 rounded-full text-sm font-medium
-                       hover:scale-105 transition-transform hidden lg:flex items-center gap-2
-                       ${showFilters ? 'ring-2 ring-primary' : ''}`}
+              className={`px-4 py-2 rounded-full text-sm font-medium bg-frameio-bg-primary border border-frameio-border
+                       hover:scale-105 transition-transform hidden lg:flex items-center gap-2 text-frameio-text-primary
+                       ${showFilters ? 'ring-2 ring-frameio-primary' : ''}`}
             >
               <Layers className="w-4 h-4" />
               Filter
@@ -173,7 +171,7 @@ export default function Home() {
             
             <button
               onClick={() => setIsAddCompanyModalOpen(true)}
-              className="hidden sm:flex frameio-button text-sm px-4 py-2 items-center gap-2"
+              className="hidden sm:flex items-center gap-2 bg-frameio-primary hover:bg-frameio-primary-hover text-white font-semibold text-sm px-6 py-2 rounded-full shadow-lg transition-all"
             >
               <Plus className="w-4 h-4" />
               Hinzufügen
@@ -185,10 +183,10 @@ export default function Home() {
             
             <button 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden frameio-card w-10 h-10 rounded-full 
-                       flex items-center justify-center"
+              className="md:hidden w-10 h-10 rounded-full bg-frameio-bg-primary border border-frameio-border
+                       flex items-center justify-center hover:bg-frameio-bg-secondary transition-colors"
             >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {mobileMenuOpen ? <X className="w-5 h-5 text-frameio-text-primary" /> : <Menu className="w-5 h-5 text-frameio-text-primary" />}
             </button>
           </div>
         </div>
@@ -208,7 +206,7 @@ export default function Home() {
             <div className="container mx-auto px-6 py-4 space-y-2">
               <button 
                 onClick={() => setIsAddCompanyModalOpen(true)}
-                className="w-full frameio-button flex items-center justify-center gap-2"
+                className="w-full bg-frameio-primary hover:bg-frameio-primary-hover text-white font-semibold px-6 py-3 rounded-full flex items-center justify-center gap-2 transition-all"
               >
                 <Plus className="w-4 h-4" />
                 Unternehmen hinzufügen
@@ -216,16 +214,16 @@ export default function Home() {
               <div className="w-full">
                 <ExportButton companies={companies} />
               </div>
-              <label className="flex items-center gap-3 p-3 rounded-xl
-                             hover:bg-secondary/50 cursor-pointer transition-colors">
+              <label className="flex items-center gap-3 p-3 rounded-xl bg-frameio-bg-primary border border-frameio-border
+                             hover:bg-frameio-bg-secondary cursor-pointer transition-colors">
                 <input
                   type="checkbox"
                   checked={showCities}
                   onChange={(e) => setShowCities(e.target.checked)}
                   className="rounded"
                 />
-                <MapPin className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Städte anzeigen</span>
+                <MapPin className="w-4 h-4 text-frameio-text-secondary" />
+                <span className="text-sm font-medium text-frameio-text-primary">Städte anzeigen</span>
               </label>
             </div>
           </motion.div>
@@ -288,17 +286,17 @@ export default function Home() {
           </AnimatePresence>
           
           {/* Stats Card - Unten Links */}
-          <div className="absolute bottom-6 left-6 z-[1000] 
-                          frameio-card hidden md:block">
+          <div className="absolute bottom-6 left-6 z-[1000] hidden md:block
+                          bg-frameio-bg-primary border border-frameio-border rounded-3xl p-6 shadow-xl">
             <div className="flex items-center gap-6">
               <div className="text-center">
-                <div className="text-2xl font-bold gradient-text">{filteredCompanies.length}</div>
-                <div className="text-xs text-muted-foreground">Unternehmen</div>
+                <div className="text-2xl font-bold frameio-gradient-text">{filteredCompanies.length}</div>
+                <div className="text-xs text-frameio-text-secondary">Unternehmen</div>
               </div>
-              <div className="w-px h-10 bg-border" />
+              <div className="w-px h-10 bg-frameio-border" />
               <div className="text-center">
-                <div className="text-2xl font-bold gradient-text">{filterState.selectedSpecializations.length || 'Alle'}</div>
-                <div className="text-xs text-muted-foreground">Filter aktiv</div>
+                <div className="text-2xl font-bold frameio-gradient-text">{filterState.selectedSpecializations.length || 'Alle'}</div>
+                <div className="text-xs text-frameio-text-secondary">Filter aktiv</div>
               </div>
             </div>
           </div>
@@ -306,10 +304,10 @@ export default function Home() {
           {/* Mobile Filter Button */}
           <button 
             onClick={() => setMobileFilterOpen(true)}
-            className="fixed bottom-20 right-6 z-[1000] 
-                       frameio-button w-14 h-14 rounded-full 
-                       shadow-[0_12px_30px_rgba(99,102,241,0.4)]
-                       flex items-center justify-center
+            className="fixed bottom-20 right-6 z-[1000] w-14 h-14 rounded-full
+                       bg-frameio-primary hover:bg-frameio-primary-hover text-white
+                       shadow-[0_12px_30px_rgba(79,70,229,0.4)]
+                       flex items-center justify-center transition-all
                        lg:hidden"
           >
             <Layers className="w-6 h-6" />
