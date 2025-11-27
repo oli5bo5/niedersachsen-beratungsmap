@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  Map as MapIcon, 
+  Map, 
   Building2, 
   MapPin, 
   Search, 
@@ -14,21 +14,10 @@ import {
   ZoomIn,
   ZoomOut,
   Crosshair,
-  Plus,
-  Download
+  Maximize2
 } from 'lucide-react'
-import { getCompanies, getSpecializations } from './actions/companies'
-import { getCities } from './actions/cities'
-import type { CompanyWithSpecializations, Specialization } from '@/lib/supabase/types'
-import type { City } from '@/lib/types/city'
-import FilterPanel from '@/components/Sidebar/FilterPanel'
-import ExportButton from '@/components/Export/ExportButton'
-import AddCompanyModal from '@/components/Modal/AddCompanyModal'
-import MobileFilterSheet from '@/components/mobile/MobileFilterSheet'
-import { useCompanyFilters } from '@/hooks/useCompanyFilters'
-
-// Dynamic import for Map component (client-side only) with Frame.io Loading
 import MapLoadingSkeleton from '@/components/loading/MapLoadingSkeleton'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 const MapComponent = dynamic(
   () => import('@/components/Map/MapWithClustering'),
@@ -38,155 +27,62 @@ const MapComponent = dynamic(
   }
 )
 
-export default function Home() {
-  const [companies, setCompanies] = useState<CompanyWithSpecializations[]>([])
-  const [specializations, setSpecializations] = useState<Specialization[]>([])
-  const [cities, setCities] = useState<City[]>([])
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string | undefined>()
-  const [showCities, setShowCities] = useState(true)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [isAddCompanyModalOpen, setIsAddCompanyModalOpen] = useState(false)
+export default function HomePage() {
   const [showFilters, setShowFilters] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [mobileFilterOpen, setMobileFilterOpen] = useState(false)
-
-  // Use company filters hook
-  const {
-    filteredCompanies,
-    filterState,
-    selectedCity,
-    citiesWithCounts,
-    setSearchQuery,
-    toggleSpecialization,
-    setSortBy,
-    setSelectedCity,
-    clearFilters,
-  } = useCompanyFilters(companies)
-
-  // Find city object when city name is selected (Hook gives string, we need object for map)
-  const selectedCityObject = selectedCity 
-    ? cities.find(c => c.name === selectedCity) || null
-    : null
-
-  // Filter cities to only show those with companies (for CityDropdown)
-  const citiesWithCompanies = cities.filter(city => 
-    citiesWithCounts.some(cityWithCount => cityWithCount.city === city.name)
-  )
-
-  // Load data on mount
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  // Separate function so we can call it after adding a city
-  const loadData = async () => {
-    try {
-      setIsLoading(true)
-      const [companiesData, specializationsData, citiesData] = await Promise.all([
-        getCompanies(),
-        getSpecializations(),
-        getCities(),
-      ])
-      setCompanies(companiesData)
-      setSpecializations(specializationsData)
-      setCities(citiesData)
-    } catch (err) {
-      console.error('Error loading data:', err)
-      setError('Fehler beim Laden der Daten')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleCompanyAdded = () => {
-    // Reload data to show new company
-    loadData()
-  }
-
-  if (isLoading) {
-    return <MapLoadingSkeleton />
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-background via-background to-secondary/10">
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="frameio-card max-w-md border-l-4 border-red-500"
-        >
-          <p className="font-bold text-lg mb-2">⚠️ Fehler</p>
-          <p className="text-muted-foreground">{error}</p>
-        </motion.div>
-      </div>
-    )
-  }
 
   return (
-    <div className="min-h-screen flex flex-col bg-frameio-bg-secondary">
+    <div className="min-h-screen flex flex-col bg-background">
       
-      {/* Frame.io Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 frameio-glass border-b border-frameio-border">
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 
+                      bg-background/80 backdrop-blur-xl 
+                      border-b border-border/50">
         <div className="container mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           
-          {/* Logo + Brand */}
+          {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-frameio-primary to-frameio-accent-purple 
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-purple-500 
                             rounded-2xl flex items-center justify-center shadow-lg">
-              <MapIcon className="w-6 h-6 text-white" />
+              <Map className="w-6 h-6 text-white" />
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-lg font-bold text-frameio-text-primary">Niedersachsen</h1>
-              <p className="text-xs text-frameio-text-secondary">Beratungsmap</p>
+              <h1 className="text-lg font-bold">Niedersachsen</h1>
+              <p className="text-xs text-muted-foreground">Beratungsmap</p>
             </div>
           </div>
           
-          {/* Desktop Stats */}
-          <div className="hidden md:flex items-center gap-6 text-sm">
-            <div className="flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-frameio-primary" />
-              <span className="font-semibold text-frameio-text-primary">{companies.length}</span>
-              <span className="text-frameio-text-secondary">Unternehmen</span>
-            </div>
-            <div className="w-px h-6 bg-frameio-border" />
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-frameio-accent-purple" />
-              <span className="font-semibold text-frameio-text-primary">{cities.length}</span>
-              <span className="text-frameio-text-secondary">Städte</span>
-            </div>
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-2">
+            <button className="frameio-nav-item">Karte</button>
+            <button className="frameio-nav-item">Unternehmen</button>
+            <button className="frameio-nav-item">Städte</button>
           </div>
           
           {/* Actions */}
           <div className="flex items-center gap-2">
             <button 
               onClick={() => setShowFilters(!showFilters)}
-              className={`px-4 py-2 rounded-full text-sm font-medium bg-frameio-bg-primary border border-frameio-border
-                       hover:scale-105 transition-transform hidden lg:flex items-center gap-2 text-frameio-text-primary
-                       ${showFilters ? 'ring-2 ring-frameio-primary' : ''}`}
+              className="hidden lg:flex frameio-card px-4 py-2 rounded-full 
+                       text-sm font-medium hover:scale-105 transition-transform
+                       items-center gap-2"
             >
               <Layers className="w-4 h-4" />
               Filter
             </button>
             
-            <button
-              onClick={() => setIsAddCompanyModalOpen(true)}
-              className="hidden sm:flex items-center gap-2 bg-frameio-primary hover:bg-frameio-primary-hover text-white font-semibold text-sm px-6 py-2 rounded-full shadow-lg transition-all"
-            >
-              <Plus className="w-4 h-4" />
-              Hinzufügen
-            </button>
+            <ThemeToggle />
             
-            <div className="hidden sm:block">
-              <ExportButton companies={companies} />
-            </div>
+            <button className="hidden sm:block frameio-button text-sm px-4 py-2">
+              Admin
+            </button>
             
             <button 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden w-10 h-10 rounded-full bg-frameio-bg-primary border border-frameio-border
-                       flex items-center justify-center hover:bg-frameio-bg-secondary transition-colors"
+              className="md:hidden frameio-card w-10 h-10 rounded-full 
+                       flex items-center justify-center"
             >
-              {mobileMenuOpen ? <X className="w-5 h-5 text-frameio-text-primary" /> : <Menu className="w-5 h-5 text-frameio-text-primary" />}
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
@@ -204,27 +100,21 @@ export default function Home() {
                        border-b border-border/50 md:hidden"
           >
             <div className="container mx-auto px-6 py-4 space-y-2">
-              <button 
-                onClick={() => setIsAddCompanyModalOpen(true)}
-                className="w-full bg-frameio-primary hover:bg-frameio-primary-hover text-white font-semibold px-6 py-3 rounded-full flex items-center justify-center gap-2 transition-all"
-              >
-                <Plus className="w-4 h-4" />
-                Unternehmen hinzufügen
+              <button className="w-full text-left px-4 py-3 rounded-xl
+                               hover:bg-secondary/50 transition-colors font-medium">
+                Karte
               </button>
-              <div className="w-full">
-                <ExportButton companies={companies} />
-              </div>
-              <label className="flex items-center gap-3 p-3 rounded-xl bg-frameio-bg-primary border border-frameio-border
-                             hover:bg-frameio-bg-secondary cursor-pointer transition-colors">
-                <input
-                  type="checkbox"
-                  checked={showCities}
-                  onChange={(e) => setShowCities(e.target.checked)}
-                  className="rounded"
-                />
-                <MapPin className="w-4 h-4 text-frameio-text-secondary" />
-                <span className="text-sm font-medium text-frameio-text-primary">Städte anzeigen</span>
-              </label>
+              <button className="w-full text-left px-4 py-3 rounded-xl
+                               hover:bg-secondary/50 transition-colors font-medium">
+                Unternehmen
+              </button>
+              <button className="w-full text-left px-4 py-3 rounded-xl
+                               hover:bg-secondary/50 transition-colors font-medium">
+                Städte
+              </button>
+              <button className="w-full frameio-button mt-2">
+                Admin
+              </button>
             </div>
           </motion.div>
         )}
@@ -236,16 +126,43 @@ export default function Home() {
           
           {/* Map Component */}
           <MapComponent
-            companies={filteredCompanies}
-            allCities={cities}
-            selectedCompanyId={selectedCompanyId}
-            onMarkerClick={setSelectedCompanyId}
-            showCities={showCities}
-            hasActiveFilters={filterState.selectedSpecializations.length > 0}
-            selectedCity={selectedCityObject}
+            companies={[]}
+            allCities={[]}
+            showCities={true}
           />
           
-          {/* Floating Filter Panel - Links (Desktop only) */}
+          {/* Floating Controls - Rechts */}
+          <div className="absolute top-6 right-6 z-[1000] space-y-3">
+            <div className="frameio-card p-2 space-y-2">
+              <button className="w-10 h-10 rounded-xl hover:bg-secondary/50 
+                               flex items-center justify-center transition-colors group">
+                <ZoomIn className="w-5 h-5 text-muted-foreground 
+                                  group-hover:text-foreground transition-colors" />
+              </button>
+              
+              <div className="w-full h-px bg-border" />
+              
+              <button className="w-10 h-10 rounded-xl hover:bg-secondary/50 
+                               flex items-center justify-center transition-colors group">
+                <ZoomOut className="w-5 h-5 text-muted-foreground 
+                                   group-hover:text-foreground transition-colors" />
+              </button>
+            </div>
+            
+            <button className="frameio-card w-10 h-10 rounded-xl
+                             flex items-center justify-center
+                             hover:scale-110 transition-transform">
+              <Crosshair className="w-5 h-5 text-muted-foreground" />
+            </button>
+            
+            <button className="frameio-card w-10 h-10 rounded-xl
+                             flex items-center justify-center
+                             hover:scale-110 transition-transform">
+              <Maximize2 className="w-5 h-5 text-muted-foreground" />
+            </button>
+          </div>
+          
+          {/* Filter Panel - Links (Desktop) */}
           <AnimatePresence>
             {showFilters && (
               <motion.div
@@ -255,8 +172,8 @@ export default function Home() {
                 transition={{ duration: 0.3 }}
                 className="absolute top-6 left-6 z-[1000] 
                            frameio-card w-80 max-h-[calc(100vh-140px)]
-                           overflow-y-auto custom-scrollbar
-                           hidden lg:block"
+                           overflow-y-auto
+                           hidden lg:block p-6"
               >
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -269,78 +186,90 @@ export default function Home() {
                     </button>
                   </div>
                   
-                  <FilterPanel
-                    specializations={specializations}
-                    filterState={filterState}
-                    citiesWithCounts={citiesWithCounts}
-                    selectedCity={selectedCity}
-                    setSearchQuery={setSearchQuery}
-                    toggleSpecialization={toggleSpecialization}
-                    setSortBy={setSortBy}
-                    setSelectedCity={setSelectedCity}
-                    clearFilters={clearFilters}
-                  />
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 
+                                     w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="text"
+                      placeholder="Suchen..."
+                      className="frameio-input w-full pl-10"
+                    />
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-medium text-muted-foreground uppercase">
+                      Kategorien
+                    </h4>
+                    
+                    <label className="flex items-center gap-3 p-3 rounded-xl 
+                                    hover:bg-secondary/50 cursor-pointer">
+                      <input type="checkbox" className="rounded" />
+                      <span className="text-sm">Digitalisierung</span>
+                    </label>
+                    
+                    <label className="flex items-center gap-3 p-3 rounded-xl 
+                                    hover:bg-secondary/50 cursor-pointer">
+                      <input type="checkbox" className="rounded" />
+                      <span className="text-sm">KI-Beratung</span>
+                    </label>
+                  </div>
+                  
+                  <button className="frameio-button w-full">
+                    Anwenden
+                  </button>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
           
           {/* Stats Card - Unten Links */}
-          <div className="absolute bottom-6 left-6 z-[1000] hidden md:block
-                          bg-frameio-bg-primary border border-frameio-border rounded-3xl p-6 shadow-xl">
+          <div className="absolute bottom-6 left-6 z-[1000] 
+                          frameio-card p-4 hidden md:block">
             <div className="flex items-center gap-6">
               <div className="text-center">
-                <div className="text-2xl font-bold frameio-gradient-text">{filteredCompanies.length}</div>
-                <div className="text-xs text-frameio-text-secondary">Unternehmen</div>
+                <div className="text-2xl font-bold">45</div>
+                <div className="text-xs text-muted-foreground">Unternehmen</div>
               </div>
-              <div className="w-px h-10 bg-frameio-border" />
+              <div className="w-px h-10 bg-border" />
               <div className="text-center">
-                <div className="text-2xl font-bold frameio-gradient-text">{filterState.selectedSpecializations.length || 'Alle'}</div>
-                <div className="text-xs text-frameio-text-secondary">Filter aktiv</div>
+                <div className="text-2xl font-bold">12</div>
+                <div className="text-xs text-muted-foreground">Städte</div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Legend - Unten Rechts */}
+          <div className="absolute bottom-6 right-6 z-[1000] 
+                          frameio-card w-64 p-4 hidden md:block">
+            <h4 className="text-sm font-semibold mb-3">Legende</h4>
+            
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 rounded-full bg-primary" />
+                <span className="text-xs text-muted-foreground flex-1">Unternehmen</span>
+                <span className="text-xs font-medium">45</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 rounded-full bg-purple-500" />
+                <span className="text-xs text-muted-foreground flex-1">Städte</span>
+                <span className="text-xs font-medium">12</span>
               </div>
             </div>
           </div>
           
           {/* Mobile Filter Button */}
           <button 
-            onClick={() => setMobileFilterOpen(true)}
-            className="fixed bottom-20 right-6 z-[1000] w-14 h-14 rounded-full
-                       bg-frameio-primary hover:bg-frameio-primary-hover text-white
+            onClick={() => setShowFilters(!showFilters)}
+            className="fixed bottom-6 right-6 z-[1000] 
+                       frameio-button w-14 h-14 rounded-full 
                        shadow-[0_12px_30px_rgba(79,70,229,0.4)]
-                       flex items-center justify-center transition-all
+                       flex items-center justify-center
                        lg:hidden"
           >
             <Layers className="w-6 h-6" />
           </button>
         </div>
       </main>
-      
-      {/* Mobile Filter Sheet */}
-      <MobileFilterSheet 
-        isOpen={mobileFilterOpen} 
-        onClose={() => setMobileFilterOpen(false)}
-      >
-        <FilterPanel
-          specializations={specializations}
-          filterState={filterState}
-          citiesWithCounts={citiesWithCounts}
-          selectedCity={selectedCity}
-          setSearchQuery={setSearchQuery}
-          toggleSpecialization={toggleSpecialization}
-          setSortBy={setSortBy}
-          setSelectedCity={setSelectedCity}
-          clearFilters={clearFilters}
-        />
-      </MobileFilterSheet>
-      
-      {/* Add Company Modal */}
-      <AddCompanyModal
-        isOpen={isAddCompanyModalOpen}
-        onClose={() => setIsAddCompanyModalOpen(false)}
-        onSuccess={handleCompanyAdded}
-        specializations={specializations}
-      />
     </div>
   )
 }
-

@@ -1,22 +1,23 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import { ThemeProvider } from '@/components/theme-provider'
 
 const inter = Inter({ 
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-inter',
-  weight: ['300', '400', '500', '600', '700', '800'],
+  weight: ['400', '500', '600', '700'],
 })
 
 export const metadata: Metadata = {
-  title: 'Niedersachsen Beratungsunternehmen Map',
-  description: 'Interaktive Karte der Digitalisierungs- und Beratungsunternehmen in Niedersachsen',
+  title: 'Niedersachsen Beratungsmap',
+  description: 'Finde digitale Beratungsunternehmen in Niedersachsen',
   keywords: ['Niedersachsen', 'Beratung', 'Digitalisierung', 'KI', 'Cloud', 'Cybersecurity'],
   authors: [{ name: 'Niedersachsen Beratungsmap' }],
   openGraph: {
-    title: 'Niedersachsen Beratungsunternehmen Map',
-    description: 'Interaktive Karte der Digitalisierungs- und Beratungsunternehmen in Niedersachsen',
+    title: 'Niedersachsen Beratungsmap',
+    description: 'Finde digitale Beratungsunternehmen in Niedersachsen',
     type: 'website',
     locale: 'de_DE',
   },
@@ -32,8 +33,15 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>" />
       </head>
-      <body className="font-sans">
-        {children}
+      <body className="font-sans antialiased">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   )
