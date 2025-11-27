@@ -41,7 +41,7 @@ export default function FilterPanel({
   const hasActiveFilters = selectedSpecializations.length > 0 || selectedCity !== null
 
   return (
-    <div className="p-4 border-b border-border bg-muted/30">
+    <div className="p-4 border-b border-gray-200 bg-white">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold text-sm">Filter</h3>
         {hasActiveFilters && (
@@ -58,11 +58,11 @@ export default function FilterPanel({
 
       {/* Sort Options */}
       <div className="mb-4">
-        <Label className="text-xs text-muted-foreground mb-2 block">Sortierung:</Label>
+        <Label className="text-xs text-gray-600 mb-2 block">Sortierung:</Label>
         <select
           value={sortBy}
           onChange={(e) => onSortChange(e.target.value as SortOption)}
-          className="w-full text-sm border border-input bg-background rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full text-sm text-gray-900 border border-gray-300 bg-white rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="alphabetical">Alphabetisch</option>
           <option value="newest">Neueste zuerst</option>
@@ -72,7 +72,7 @@ export default function FilterPanel({
 
       {/* City Filter */}
       <div className="mb-4">
-        <Label className="text-xs text-muted-foreground mb-2 block">Unternehmensübersicht:</Label>
+        <Label className="text-xs text-gray-600 mb-2 block">Unternehmensübersicht:</Label>
         <CityFilter
           cities={cities}
           selectedCity={selectedCity}
@@ -85,24 +85,24 @@ export default function FilterPanel({
 
       {/* Specializations Filter */}
       <div>
-        <Label className="text-xs text-muted-foreground mb-3 block">Spezialisierungen:</Label>
+        <Label className="text-xs text-gray-600 mb-3 block">Spezialisierungen:</Label>
         <div className="space-y-2">
           {specializations.map((spec) => (
             <label
               key={spec.id}
               className={cn(
-                "flex items-center gap-2 cursor-pointer hover:bg-accent p-2 rounded-md transition-colors",
-                selectedSpecializations.includes(spec.id) && "bg-accent/50"
+                "flex items-center gap-2 cursor-pointer hover:bg-blue-50 p-2 rounded-md transition-colors",
+                selectedSpecializations.includes(spec.id) && "bg-blue-50"
               )}
             >
               <input
                 type="checkbox"
                 checked={selectedSpecializations.includes(spec.id)}
                 onChange={() => onToggleSpecialization(spec.id)}
-                className="w-4 h-4 rounded border-input focus:ring-2 focus:ring-ring"
+                className="w-4 h-4 rounded border-gray-300 focus:ring-2 focus:ring-blue-500"
               />
               <span className="text-xl flex-shrink-0">{spec.icon}</span>
-              <span className="text-sm font-medium flex-1">
+              <span className="text-sm font-medium flex-1 text-gray-900">
                 {spec.name}
               </span>
               <span

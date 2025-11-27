@@ -210,11 +210,11 @@ export default function AddCompanyForm({
 
       {/* Website */}
       <div>
-        <label className="block text-sm font-medium mb-1">Website</label>
+        <label className="block text-sm font-medium text-gray-900 mb-1">Website</label>
         <input
           {...register('website')}
           type="url"
-          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="https://example.com"
         />
         {errors.website && (
