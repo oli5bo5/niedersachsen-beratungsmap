@@ -11,31 +11,11 @@ import {
 } from 'lucide-react'
 import AddCompanyForm from '@/components/admin/AddCompanyForm'
 import CompanyList from '@/components/admin/CompanyList'
-import { getSupabaseStats } from '@/app/actions/supabase-companies'
+import { useStats } from '@/lib/hooks/useCompanies'
 
 export default function AdminPage() {
   const [showForm, setShowForm] = useState(false)
-  const [stats, setStats] = useState({
-    totalCompanies: 0,
-    citiesCount: {},
-    specializationsCount: {},
-  })
-  const [loading, setLoading] = useState(true)
-
-  // Lade Statistiken
-  useEffect(() => {
-    async function loadStats() {
-      try {
-        const data = await getSupabaseStats()
-        setStats(data)
-      } catch (error) {
-        console.error('Fehler beim Laden der Statistiken:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadStats()
-  }, [])
+  const { data: stats, isLoading: loading } = useStats()
 
   return (
     <div className="min-h-screen bg-frameio-bg-secondary">
@@ -101,7 +81,7 @@ export default function AdminPage() {
               </span>
             </div>
             <h3 className="text-3xl font-bold text-frameio-text-primary mb-1">
-              {loading ? '...' : stats.totalCompanies}
+              {loading ? '...' : stats?.totalCompanies || 0}
             </h3>
             <p className="text-sm text-frameio-text-secondary">
               Registrierte Unternehmen
@@ -121,7 +101,7 @@ export default function AdminPage() {
               </div>
             </div>
             <h3 className="text-3xl font-bold text-frameio-text-primary mb-1">
-              {loading ? '...' : Object.keys(stats.citiesCount).length}
+              {loading ? '...' : Object.keys(stats?.citiesCount || {}).length}
             </h3>
             <p className="text-sm text-frameio-text-secondary">
               Abgedeckte Städte
@@ -141,7 +121,7 @@ export default function AdminPage() {
               </div>
             </div>
             <h3 className="text-3xl font-bold text-frameio-text-primary mb-1">
-              {loading ? '...' : Object.keys(stats.specializationsCount).length}
+              {loading ? '...' : Object.keys(stats?.specializationsCount || {}).length}
             </h3>
             <p className="text-sm text-frameio-text-secondary">
               Spezialisierungen
@@ -167,8 +147,6 @@ export default function AdminPage() {
               <AddCompanyForm 
                 onSuccess={() => {
                   setShowForm(false)
-                  // Reload stats
-                  getSupabaseStats().then(setStats)
                 }} 
                 onCancel={() => setShowForm(false)}
               />
@@ -182,7 +160,7 @@ export default function AdminPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
         >
-          <CompanyList onUpdate={() => getSupabaseStats().then(setStats)} />
+          <CompanyList />
         </motion.div>
       </div>
     </div>
