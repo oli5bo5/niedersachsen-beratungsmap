@@ -1,221 +1,190 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import dynamic from 'next/dynamic'
-import { getCompanies, getSpecializations, deleteCompany } from '../actions/companies'
-import { getCities } from '../actions/cities'
-import type { CompanyWithSpecializations, Specialization } from '@/lib/supabase/types'
-import type { City } from '@/lib/types/city'
-import AddCompanyForm from '@/components/Admin/AddCompanyForm'
-import AddCityForm from '@/components/Admin/AddCityForm'
-import CityList from '@/components/Admin/CityList'
-
-// Dynamic import for Map component (client-side only)
-const MapComponent = dynamic(
-  () => import('@/components/Map/MapComponent'),
-  { 
-    ssr: false,
-    loading: () => (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    )
-  }
-)
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { 
+  Plus, 
+  Building2, 
+  TrendingUp, 
+  MapPin, 
+  BarChart3
+} from 'lucide-react'
+import AddCompanyForm from '@/components/admin/AddCompanyForm'
+import CompanyList from '@/components/admin/CompanyList'
+import { getSupabaseStats } from '@/app/actions/supabase-companies'
 
 export default function AdminPage() {
-  const [companies, setCompanies] = useState<CompanyWithSpecializations[]>([])
-  const [specializations, setSpecializations] = useState<Specialization[]>([])
-  const [cities, setCities] = useState<City[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [showForm, setShowForm] = useState(false)
+  const [stats, setStats] = useState({
+    totalCompanies: 0,
+    citiesCount: {},
+    specializationsCount: {},
+  })
+  const [loading, setLoading] = useState(true)
 
-  const loadData = async () => {
-    try {
-      const [companiesData, specializationsData, citiesData] = await Promise.all([
-        getCompanies(),
-        getSpecializations(),
-        getCities(),
-      ])
-      setCompanies(companiesData)
-      setSpecializations(specializationsData)
-      setCities(citiesData)
-    } catch (err) {
-      console.error('Error loading data:', err)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
+  // Lade Statistiken
   useEffect(() => {
-    loadData()
+    async function loadStats() {
+      try {
+        const data = await getSupabaseStats()
+        setStats(data)
+      } catch (error) {
+        console.error('Fehler beim Laden der Statistiken:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadStats()
   }, [])
 
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteCompany(id)
-      await loadData() // Reload data
-      setDeleteConfirm(null)
-    } catch (err) {
-      alert('Fehler beim Löschen')
-    }
-  }
+  return (
+    <div className="min-h-screen bg-frameio-bg-secondary">
+      {/* ============================================ */}
+      {/* HEADER */}
+      {/* ============================================ */}
+      <div className="frameio-bg-gradient border-b border-frameio-border">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div>
+              <motion.h1 
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-4xl font-bold text-frameio-text-primary mb-2"
+              >
+                Admin Dashboard
+              </motion.h1>
+              <motion.p 
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="text-frameio-text-secondary"
+              >
+                Verwalte Beratungsunternehmen und Spezialisierungen in Niedersachsen
+              </motion.p>
+            </div>
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Lade Admin-Panel...</p>
+            <motion.button
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowForm(!showForm)}
+              className="bg-frameio-primary hover:bg-frameio-primary-hover text-white font-semibold px-6 py-3 rounded-full shadow-lg transition-all flex items-center gap-2 self-start md:self-auto"
+            >
+              <Plus className="w-5 h-5" />
+              Neues Unternehmen
+            </motion.button>
+          </div>
         </div>
       </div>
-    )
-  }
 
-  return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-gray-800">
-            🔧 Admin Panel
-          </h1>
-          <p className="text-sm text-gray-600">
-            Unternehmen verwalten
-          </p>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="container mx-auto px-4 py-6">
-          {/* Three Column Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            {/* Add City Form */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <AddCityForm onSuccess={loadData} />
+      {/* ============================================ */}
+      {/* STATS CARDS */}
+      {/* ============================================ */}
+      <div className="max-w-7xl mx-auto px-6 -mt-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Total Companies */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-frameio-bg-primary border border-frameio-border rounded-2xl p-6 shadow-lg"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-frameio-primary to-frameio-accent-purple flex items-center justify-center">
+                <Building2 className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-green-500 text-sm font-medium flex items-center gap-1">
+                <TrendingUp className="w-4 h-4" />
+                +12%
+              </span>
             </div>
+            <h3 className="text-3xl font-bold text-frameio-text-primary mb-1">
+              {loading ? '...' : stats.totalCompanies}
+            </h3>
+            <p className="text-sm text-frameio-text-secondary">
+              Registrierte Unternehmen
+            </p>
+          </motion.div>
 
-            {/* Add Company Form */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-bold mb-4">Neues Unternehmen</h2>
-              <AddCompanyForm
-                specializations={specializations}
-                onSuccess={loadData}
-              />
-            </div>
-
-            {/* Map Preview */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-bold mb-4">Kartenvorschau</h2>
-              <div className="h-[600px] rounded-lg overflow-hidden border">
-                <MapComponent companies={companies} allCities={cities} />
+          {/* Cities Count */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-frameio-bg-primary border border-frameio-border rounded-2xl p-6 shadow-lg"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                <MapPin className="w-6 h-6 text-white" />
               </div>
             </div>
-          </div>
-          
-          {/* Cities Table */}
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-xl font-bold mb-4">
-              Verwaltete Städte ({cities.length})
-            </h2>
-            <CityList cities={cities} />
-          </div>
+            <h3 className="text-3xl font-bold text-frameio-text-primary mb-1">
+              {loading ? '...' : Object.keys(stats.citiesCount).length}
+            </h3>
+            <p className="text-sm text-frameio-text-secondary">
+              Abgedeckte Städte
+            </p>
+          </motion.div>
 
-          {/* Companies Table */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-bold mb-4">
-              Alle Unternehmen ({companies.length})
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="px-4 py-2 text-left">Name</th>
-                    <th className="px-4 py-2 text-left">Adresse</th>
-                    <th className="px-4 py-2 text-left">Spezialisierungen</th>
-                    <th className="px-4 py-2 text-left">Kontakt</th>
-                    <th className="px-4 py-2 text-center">Aktionen</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {companies.map((company) => (
-                    <tr key={company.id} className="border-b hover:bg-gray-50">
-                      <td className="px-4 py-3">
-                        <div className="font-medium">{company.name}</div>
-                        {company.description && (
-                          <div className="text-xs text-gray-500 line-clamp-1">
-                            {company.description}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        {company.address || '-'}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-1">
-                          {company.specializations.map((spec) => (
-                            <span
-                              key={spec.id}
-                              className="text-xs px-2 py-1 rounded"
-                              style={{
-                                backgroundColor: spec.color + '20',
-                                color: spec.color,
-                              }}
-                            >
-                              {spec.icon}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        {company.email && (
-                          <div className="text-xs">✉️ {company.email}</div>
-                        )}
-                        {company.phone && (
-                          <div className="text-xs">📞 {company.phone}</div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {deleteConfirm === company.id ? (
-                          <div className="flex gap-2 justify-center">
-                            <button
-                              onClick={() => handleDelete(company.id)}
-                              className="px-2 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
-                            >
-                              Bestätigen
-                            </button>
-                            <button
-                              onClick={() => setDeleteConfirm(null)}
-                              className="px-2 py-1 bg-gray-400 text-white text-xs rounded hover:bg-gray-500"
-                            >
-                              Abbrechen
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => setDeleteConfirm(company.id)}
-                            className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
-                          >
-                            Löschen
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              {companies.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  Noch keine Unternehmen vorhanden
-                </div>
-              )}
+          {/* Specializations */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="bg-frameio-bg-primary border border-frameio-border rounded-2xl p-6 shadow-lg"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center">
+                <BarChart3 className="w-6 h-6 text-white" />
+              </div>
             </div>
-          </div>
+            <h3 className="text-3xl font-bold text-frameio-text-primary mb-1">
+              {loading ? '...' : Object.keys(stats.specializationsCount).length}
+            </h3>
+            <p className="text-sm text-frameio-text-secondary">
+              Spezialisierungen
+            </p>
+          </motion.div>
         </div>
+      </div>
+
+      {/* ============================================ */}
+      {/* MAIN CONTENT */}
+      {/* ============================================ */}
+      <div className="max-w-7xl mx-auto px-6 pb-12">
+        {/* Add Company Form (collapsible) */}
+        <AnimatePresence>
+          {showForm && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="mb-8 overflow-hidden"
+            >
+              <AddCompanyForm 
+                onSuccess={() => {
+                  setShowForm(false)
+                  // Reload stats
+                  getSupabaseStats().then(setStats)
+                }} 
+                onCancel={() => setShowForm(false)}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Company List */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+        >
+          <CompanyList onUpdate={() => getSupabaseStats().then(setStats)} />
+        </motion.div>
       </div>
     </div>
   )
 }
-
