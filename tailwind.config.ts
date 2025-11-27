@@ -52,6 +52,9 @@ const config: Config = {
         'frameio-text-secondary': 'rgb(var(--frameio-text-secondary))',
         'frameio-text-tertiary': 'rgb(var(--frameio-text-tertiary))',
         'frameio-border': 'rgb(var(--frameio-border))',
+        'frameio-accent-purple': 'rgb(var(--frameio-accent-purple))',
+        'frameio-accent-pink': 'rgb(var(--frameio-accent-pink))',
+        'frameio-accent-blue': 'rgb(var(--frameio-accent-blue))',
       },
       borderRadius: {
         lg: 'var(--radius)',
