@@ -21,6 +21,10 @@ const GeoJSON = dynamic(
   () => import('react-leaflet').then((mod) => mod.GeoJSON),
   { ssr: false }
 )
+const MarkerClusterGroup = dynamic(
+  () => import('react-leaflet-cluster'),
+  { ssr: false }
+)
 
 // Import CustomMarker separately
 import CustomMarker from './CustomMarker'
@@ -226,14 +230,51 @@ export default function MapComponent({
           )
         })}
 
-        {/* Company markers */}
-        {companies.map((company) => (
-          <CustomMarker
-            key={company.id}
-            company={company}
-            onClick={onMarkerClick}
-          />
-        ))}
+        {/* Company markers with clustering */}
+        <MarkerClusterGroup
+          chunkedLoading
+          spiderfyOnMaxZoom={true}
+          showCoverageOnHover={false}
+          zoomToBoundsOnClick={true}
+          maxClusterRadius={60}
+          iconCreateFunction={(cluster: any) => {
+            if (!L) return undefined
+            const count = cluster.getChildCount()
+            const size = count < 10 ? 40 : count < 50 ? 50 : 60
+            
+            return L.divIcon({
+              html: `
+                <div style="
+                  background: linear-gradient(135deg, #8B5CF6, #3B82F6);
+                  color: white;
+                  border-radius: 50%;
+                  width: ${size}px;
+                  height: ${size}px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-weight: bold;
+                  font-size: ${count < 10 ? '14px' : '16px'};
+                  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
+                  border: 3px solid white;
+                  transition: all 0.3s;
+                ">
+                  ${count}
+                </div>
+              `,
+              className: 'marker-cluster',
+              iconSize: [size, size],
+            })
+          }}
+        >
+          {companies.map((company) => (
+            <CustomMarker
+              key={company.id}
+              company={company}
+              onClick={onMarkerClick}
+            />
+          ))}
+        </MarkerClusterGroup>
       </MapContainer>
       
       {/* Legend */}

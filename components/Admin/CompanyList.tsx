@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { 
   Trash2, 
   Edit, 
@@ -14,7 +15,8 @@ import {
   ChevronDown,
   Loader2
 } from 'lucide-react'
-import { getSupabaseCompanies, deleteSupabaseCompany } from '@/app/actions/supabase-companies'
+import { useCompanies, useDeleteCompany } from '@/lib/hooks/useCompanies'
+import { useDebounce } from '@/lib/hooks/useDebounce'
 import { CompanyWithSpecializations } from '@/lib/types/company'
 
 interface CompanyListProps {
@@ -22,64 +24,43 @@ interface CompanyListProps {
 }
 
 export default function CompanyList({ onUpdate }: CompanyListProps) {
-  const [companies, setCompanies] = useState<CompanyWithSpecializations[]>([])
-  const [filteredCompanies, setFilteredCompanies] = useState<CompanyWithSpecializations[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
+  const { data: companies = [], isLoading: loading } = useCompanies()
+  const deleteMutation = useDeleteCompany()
+  
+  const [searchInput, setSearchInput] = useState('')
+  const debouncedSearch = useDebounce(searchInput, 300)
   const [selectedCity, setSelectedCity] = useState<string>('all')
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-
-  // Lade Unternehmen
-  useEffect(() => {
-    loadCompanies()
-  }, [])
-
-  async function loadCompanies() {
-    try {
-      setLoading(true)
-      const data = await getSupabaseCompanies()
-      setCompanies(data)
-      setFilteredCompanies(data)
-    } catch (error) {
-      console.error('Fehler beim Laden:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  
+  const parentRef = useRef<HTMLDivElement>(null)
 
   // Filter-Logik
-  useEffect(() => {
-    let filtered = companies
+  const filteredCompanies = companies.filter(c => {
+    const matchesSearch = !debouncedSearch || 
+      c.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      c.city.toLowerCase().includes(debouncedSearch.toLowerCase())
+    
+    const matchesCity = selectedCity === 'all' || c.city === selectedCity
+    
+    return matchesSearch && matchesCity
+  })
 
-    // Suchfilter
-    if (searchQuery) {
-      filtered = filtered.filter(c =>
-        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.city.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    }
-
-    // Städtefilter
-    if (selectedCity !== 'all') {
-      filtered = filtered.filter(c => c.city === selectedCity)
-    }
-
-    setFilteredCompanies(filtered)
-  }, [searchQuery, selectedCity, companies])
+  // Virtualization
+  const virtualizer = useVirtualizer({
+    count: filteredCompanies.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 200,
+    overscan: 5,
+  })
 
   // Delete Handler
   async function handleDelete(id: string, name: string) {
     if (!confirm(`Möchtest du "${name}" wirklich löschen?`)) return
 
     try {
-      setDeletingId(id)
-      await deleteSupabaseCompany(id)
-      await loadCompanies()
+      await deleteMutation.mutateAsync(id)
       onUpdate?.()
     } catch (error) {
       alert('Fehler beim Löschen: ' + (error instanceof Error ? error.message : 'Unbekannter Fehler'))
-    } finally {
-      setDeletingId(null)
     }
   }
 
@@ -107,8 +88,8 @@ export default function CompanyList({ onUpdate }: CompanyListProps) {
             <input
               type="search"
               placeholder="Unternehmen suchen..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               className="w-full bg-frameio-bg-secondary border border-frameio-border rounded-xl px-4 py-3 pl-11 text-frameio-text-primary focus:outline-none focus:border-frameio-primary focus:ring-2 focus:ring-frameio-primary/20 transition-all"
             />
           </div>
@@ -140,19 +121,38 @@ export default function CompanyList({ onUpdate }: CompanyListProps) {
       </div>
 
       {/* ============================================ */}
-      {/* COMPANY CARDS */}
+      {/* VIRTUALIZED COMPANY CARDS */}
       {/* ============================================ */}
-      <div className="space-y-4">
-        <AnimatePresence mode="popLayout">
-          {filteredCompanies.map((company, index) => (
-            <motion.div
-              key={company.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, x: -100 }}
-              transition={{ delay: index * 0.05 }}
-              className="bg-frameio-bg-primary border border-frameio-border rounded-2xl p-6 hover:shadow-lg transition-shadow"
-            >
+      <div
+        ref={parentRef}
+        className="h-[600px] overflow-auto"
+        style={{ contain: 'strict' }}
+      >
+        <div
+          style={{
+            height: `${virtualizer.getTotalSize()}px`,
+            width: '100%',
+            position: 'relative',
+          }}
+        >
+          {virtualizer.getVirtualItems().map((virtualItem) => {
+            const company = filteredCompanies[virtualItem.index]
+            
+            return (
+              <motion.div
+                key={company.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: `${virtualItem.size}px`,
+                  transform: `translateY(${virtualItem.start}px)`,
+                }}
+                className="bg-frameio-bg-primary border border-frameio-border rounded-2xl p-6 hover:shadow-lg transition-shadow mb-4"
+              >
               <div className="flex flex-col lg:flex-row gap-6">
                 {/* Left: Info */}
                 <div className="flex-1">
@@ -248,11 +248,11 @@ export default function CompanyList({ onUpdate }: CompanyListProps) {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => handleDelete(company.id, company.name)}
-                    disabled={deletingId === company.id}
+                    disabled={deleteMutation.isPending}
                     className="px-4 py-2 rounded-xl border-2 border-red-200 hover:border-red-500 hover:bg-red-50 transition-colors flex items-center gap-2 text-red-600 disabled:opacity-50"
                     title="Löschen"
                   >
-                    {deletingId === company.id ? (
+                    {deleteMutation.isPending ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <Trash2 className="w-4 h-4" />
@@ -262,8 +262,9 @@ export default function CompanyList({ onUpdate }: CompanyListProps) {
                 </div>
               </div>
             </motion.div>
-          ))}
-        </AnimatePresence>
+          )
+          })}
+        </div>
 
         {/* Empty State */}
         {filteredCompanies.length === 0 && (
