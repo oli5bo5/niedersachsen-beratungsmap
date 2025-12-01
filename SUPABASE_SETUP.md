@@ -236,3 +236,5 @@ Nach erfolgreichem Setup kannst du:
 - Regeneriere Types: Supabase Dashboard > Settings > API > Generate Types
 - Kopiere in `lib/supabase/database.types.ts`
 
+
+

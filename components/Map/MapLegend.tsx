@@ -71,3 +71,5 @@ export default function MapLegend({ items, className }: MapLegendProps) {
   )
 }
 
+
+

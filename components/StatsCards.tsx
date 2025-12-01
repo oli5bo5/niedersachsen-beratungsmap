@@ -75,3 +75,5 @@ export default function StatsCards({ companies }: StatsCardsProps) {
   )
 }
 
+
+

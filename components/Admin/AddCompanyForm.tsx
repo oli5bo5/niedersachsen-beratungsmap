@@ -1,292 +1,459 @@
 'use client'
 
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import type { Specialization } from '@/lib/supabase/types'
-import { createCompany } from '@/app/actions/companies'
+import { motion } from 'framer-motion'
+import { 
+  MapPin, 
+  Globe, 
+  Mail, 
+  Phone, 
+  Building2,
+  Users,
+  Calendar,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  X
+} from 'lucide-react'
+import { useCreateCompany, useSpecializations } from '@/lib/hooks/useCompanies'
 
-const companySchema = z.object({
-  name: z.string().min(3, 'Name muss mindestens 3 Zeichen lang sein'),
-  city: z.string().min(2, 'Stadt ist erforderlich'),
-  description: z.string().min(20, 'Beschreibung muss mindestens 20 Zeichen haben'),
-  address: z.string().min(5, 'Vollständige Adresse erforderlich'),
-  website: z.string().url('Gültige URL erforderlich').optional().or(z.literal('')),
-  email: z.string().email('Gültige E-Mail erforderlich'),
-  phone: z.string().min(10, 'Gültige Telefonnummer erforderlich'),
-  specialization_ids: z.array(z.string()).min(1, 'Mindestens eine Spezialisierung auswählen'),
-})
-
-type CompanyFormData = z.infer<typeof companySchema>
-
-interface AddCompanyFormProps {
-  specializations: Specialization[]
-  onSuccess?: () => void
+// ============================================
+// GEOCODING HELPER
+// ============================================
+async function geocodeAddress(city: string, address: string): Promise<{ lat: number; lng: number }> {
+  const query = `${address}, ${city}, Niedersachsen, Germany`
+  
+  const response = await fetch(
+    `https://nominatim.openstreetmap.org/search?` +
+    `format=json&q=${encodeURIComponent(query)}&limit=1`,
+    {
+      headers: {
+        'User-Agent': 'NiedersachsenBeratungsmap/1.0'
+      }
+    }
+  )
+  
+  const data = await response.json()
+  
+  if (data && data.length > 0) {
+    return {
+      lat: parseFloat(data[0].lat),
+      lng: parseFloat(data[0].lon)
+    }
+  }
+  
+  throw new Error('Adresse konnte nicht gefunden werden. Bitte überprüfe die Eingabe.')
 }
 
-export default function AddCompanyForm({
-  specializations,
-  onSuccess,
-}: AddCompanyFormProps) {
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
+// ============================================
+// TYPES
+// ============================================
+interface AddCompanyFormProps {
+  onSuccess?: () => void
+  onCancel?: () => void
+}
+
+// ============================================
+// COMPONENT
+// ============================================
+
+export default function AddCompanyForm({ onSuccess, onCancel }: AddCompanyFormProps) {
+  const { data: specializations = [] } = useSpecializations()
+  const createMutation = useCreateCompany()
+  
+  const [selectedSpecs, setSelectedSpecs] = useState<string[]>([])
+  const [geocoding, setGeocoding] = useState(false)
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null)
-  const [isGeocoding, setIsGeocoding] = useState(false)
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-    watch,
-  } = useForm<CompanyFormData>({
-    resolver: zodResolver(companySchema),
-  })
-
-  const addressValue = watch('address')
-  const cityValue = watch('city')
-
-  // Geocode address
-  const handleGeocode = async () => {
-    if (!addressValue || !cityValue) {
-      setError('Bitte geben Sie Stadt und Adresse ein')
-      return
-    }
-
-    setIsGeocoding(true)
-    setError(null)
-
+  // Auto-Geocoding beim Eingeben von Stadt/Adresse
+  const handleGeocodePreview = async (city: string, address: string) => {
+    if (!city || !address) return
+    
     try {
-      const fullAddress = `${addressValue}, ${cityValue}, Niedersachsen, Deutschland`
-      const response = await fetch('/api/geocode', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address: fullAddress }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Geocoding fehlgeschlagen')
-      }
-
-      const data = await response.json()
-      setCoordinates({ lat: data.lat, lng: data.lng })
-      setSuccess(`Koordinaten gefunden: ${data.lat.toFixed(4)}, ${data.lng.toFixed(4)}`)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Geocoding fehlgeschlagen')
+      setGeocoding(true)
+      const coords = await geocodeAddress(city, address)
+      setCoordinates(coords)
+    } catch (error) {
+      console.error('Geocoding-Vorschau fehlgeschlagen:', error)
     } finally {
-      setIsGeocoding(false)
+      setGeocoding(false)
     }
   }
 
-  const onSubmit = async (data: CompanyFormData) => {
-    setIsLoading(true)
-    setError(null)
-    setSuccess(null)
+  // Form Submit Handler
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setMessage(null)
 
+    const formData = new FormData(e.currentTarget)
+    
     try {
-      // Check if coordinates are set
-      if (!coordinates) {
-        throw new Error('Bitte geocodieren Sie die Adresse zuerst')
+      // Geocodierung
+      const city = formData.get('city') as string
+      const address = formData.get('address') as string
+      
+      let coords = coordinates
+      if (!coords) {
+        coords = await geocodeAddress(city, address)
+      }
+      
+      // Erstelle Company Data
+      const companyData = {
+        name: formData.get('name') as string,
+        city,
+        address,
+        lat: coords.lat,
+        lng: coords.lng,
+        website: (formData.get('website') as string) || undefined,
+        phone: (formData.get('phone') as string) || undefined,
+        email: (formData.get('email') as string) || undefined,
+        description: (formData.get('description') as string) || undefined,
+        employee_count: formData.get('employee_count') ? parseInt(formData.get('employee_count') as string) : undefined,
+        founded_year: formData.get('founded_year') ? parseInt(formData.get('founded_year') as string) : undefined,
+        specialization_ids: selectedSpecs
       }
 
-      await createCompany({
-        name: data.name,
-        city: data.city,
-        description: data.description,
-        address: data.address,
-        latitude: coordinates.lat,
-        longitude: coordinates.lng,
-        website: data.website,
-        email: data.email,
-        phone: data.phone,
-        specialization_ids: data.specialization_ids,
+      // Erstelle Unternehmen mit React Query
+      await createMutation.mutateAsync(companyData)
+      
+      setMessage({ 
+        type: 'success', 
+        text: '✅ Unternehmen erfolgreich hinzugefügt!' 
       })
-
-      setSuccess('✅ Unternehmen erfolgreich hinzugefügt!')
-      reset()
+      
+      // Reset Form
+      e.currentTarget.reset()
+      setSelectedSpecs([])
       setCoordinates(null)
-      onSuccess?.()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Fehler beim Erstellen')
-    } finally {
-      setIsLoading(false)
+      
+      // Callback
+      setTimeout(() => {
+        onSuccess?.()
+      }, 1500)
+      
+    } catch (error) {
+      setMessage({ 
+        type: 'error', 
+        text: `❌ Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}` 
+      })
     }
+  }
+
+  // Toggle Spezialisierung
+  const toggleSpecialization = (specId: string) => {
+    setSelectedSpecs(prev =>
+      prev.includes(specId)
+        ? prev.filter(id => id !== specId)
+        : [...prev, specId]
+    )
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {/* Success/Error Messages */}
-      {success && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-          {success}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="bg-frameio-bg-primary border border-frameio-border rounded-2xl p-8 shadow-lg"
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-semibold text-frameio-text-primary flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-frameio-primary to-frameio-accent-purple flex items-center justify-center">
+              <Building2 className="w-5 h-5 text-white" />
+            </div>
+            Neues Unternehmen hinzufügen
+          </h2>
+          <p className="text-sm text-frameio-text-secondary mt-1 ml-[52px]">
+            Alle Pflichtfelder (*) müssen ausgefüllt werden
+          </p>
         </div>
-      )}
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {error}
-        </div>
-      )}
-
-      {/* Name */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Firmenname <span className="text-red-500">*</span>
-        </label>
-        <input
-          {...register('name')}
-          type="text"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="z.B. Digital Pioneers Hannover"
-        />
-        {errors.name && (
-          <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
-        )}
-      </div>
-
-      {/* Stadt */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Stadt <span className="text-red-500">*</span>
-        </label>
-        <input
-          {...register('city')}
-          type="text"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="z.B. Hannover"
-        />
-        {errors.city && (
-          <p className="text-red-500 text-sm mt-1">{errors.city.message}</p>
-        )}
-      </div>
-
-      {/* Description */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Beschreibung <span className="text-red-500">*</span>
-        </label>
-        <textarea
-          {...register('description')}
-          rows={4}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Beschreiben Sie die Dienstleistungen und Expertise des Unternehmens..."
-        />
-        {errors.description && (
-          <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>
-        )}
-      </div>
-
-      {/* Address with Geocode Button */}
-      <div>
-        <label className="block text-sm font-medium mb-1">
-          Adresse <span className="text-red-500">*</span>
-        </label>
-        <div className="flex gap-2">
-          <input
-            {...register('address')}
-            className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Straße, PLZ, Stadt"
-          />
+        {onCancel && (
           <button
             type="button"
-            onClick={handleGeocode}
-            disabled={isGeocoding || !addressValue}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+            onClick={onCancel}
+            className="p-2 hover:bg-frameio-bg-secondary rounded-lg transition-colors"
           >
-            {isGeocoding ? '⏳' : '📍'} Geocode
+            <X className="w-5 h-5 text-frameio-text-secondary" />
           </button>
-        </div>
-        {errors.address && (
-          <p className="text-red-500 text-xs mt-1">{errors.address.message}</p>
-        )}
-        {coordinates && (
-          <p className="text-green-600 text-xs mt-1">
-            ✓ Koordinaten: {coordinates.lat.toFixed(4)}, {coordinates.lng.toFixed(4)}
-          </p>
         )}
       </div>
 
-      {/* Website */}
-      <div>
-        <label className="block text-sm font-medium text-gray-900 mb-1">Website</label>
-        <input
-          {...register('website')}
-          type="url"
-          className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="https://example.com"
-        />
-        {errors.website && (
-          <p className="text-red-500 text-xs mt-1">{errors.website.message}</p>
-        )}
-      </div>
-
-      {/* Email */}
-      <div>
-        <label className="block text-sm font-medium mb-1">E-Mail</label>
-        <input
-          {...register('email')}
-          type="email"
-          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="info@example.com"
-        />
-        {errors.email && (
-          <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
-        )}
-      </div>
-
-      {/* Phone */}
-      <div>
-        <label className="block text-sm font-medium mb-1">Telefon</label>
-        <input
-          {...register('phone')}
-          type="tel"
-          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="+49 123 456789"
-        />
-      </div>
-
-      {/* Specializations */}
-      <div>
-        <label className="block text-sm font-medium mb-2">
-          Spezialisierungen <span className="text-red-500">*</span>
-        </label>
-        <div className="space-y-2">
-          {specializations.map((spec) => (
-            <label key={spec.id} className="flex items-center cursor-pointer hover:bg-blue-50 p-2 border border-gray-300 bg-white rounded">
-              <input
-                type="checkbox"
-                value={spec.id}
-                {...register('specialization_ids')}
-                className="mr-2"
-              />
-              <span className="text-sm text-gray-900">
-                {spec.icon} {spec.name}
-              </span>
-              <span
-                className="ml-auto w-4 h-4 rounded-full"
-                style={{ backgroundColor: spec.color }}
-              />
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* ============================================ */}
+        {/* BASIC INFO */}
+        {/* ============================================ */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Firmenname */}
+          <div>
+            <label className="block text-sm font-semibold text-frameio-text-primary mb-2">
+              Firmenname *
             </label>
-          ))}
-        </div>
-        {errors.specialization_ids && (
-          <p className="text-red-500 text-xs mt-1">
-            {errors.specialization_ids.message}
-          </p>
-        )}
-      </div>
+            <input
+              name="name"
+              type="text"
+              required
+              className="w-full bg-frameio-bg-secondary border border-frameio-border rounded-xl px-4 py-3 text-frameio-text-primary focus:outline-none focus:border-frameio-primary focus:ring-2 focus:ring-frameio-primary/20 transition-all"
+              placeholder="z.B. DigiConsult Hannover GmbH"
+            />
+          </div>
 
-      {/* Submit Button */}
-      <button
-        type="submit"
-        disabled={isLoading || !coordinates}
-        className="w-full py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:bg-gray-400 transition-colors"
-      >
-        {isLoading ? 'Wird erstellt...' : '✓ Unternehmen hinzufügen'}
-      </button>
-    </form>
+          {/* Stadt */}
+          <div>
+            <label className="block text-sm font-semibold text-frameio-text-primary mb-2">
+              Stadt *
+            </label>
+            <input
+              name="city"
+              type="text"
+              required
+              className="w-full bg-frameio-bg-secondary border border-frameio-border rounded-xl px-4 py-3 text-frameio-text-primary focus:outline-none focus:border-frameio-primary focus:ring-2 focus:ring-frameio-primary/20 transition-all"
+              placeholder="z.B. Hannover"
+              onBlur={(e) => {
+                const address = (document.querySelector('input[name="address"]') as HTMLInputElement)?.value
+                if (e.target.value && address) {
+                  handleGeocodePreview(e.target.value, address)
+                }
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Adresse */}
+        <div>
+          <label className="block text-sm font-semibold text-frameio-text-primary mb-2">
+            Adresse *
+          </label>
+          <div className="relative">
+            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-frameio-text-secondary" />
+            <input
+              name="address"
+              type="text"
+              required
+              className="w-full bg-frameio-bg-secondary border border-frameio-border rounded-xl px-4 py-3 pl-11 text-frameio-text-primary focus:outline-none focus:border-frameio-primary focus:ring-2 focus:ring-frameio-primary/20 transition-all"
+              placeholder="z.B. Vahrenwalder Straße 7"
+              onBlur={(e) => {
+                const city = (document.querySelector('input[name="city"]') as HTMLInputElement)?.value
+                if (e.target.value && city) {
+                  handleGeocodePreview(city, e.target.value)
+                }
+              }}
+            />
+            {geocoding && (
+              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-frameio-primary animate-spin" />
+            )}
+          </div>
+          {coordinates && (
+            <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+              <CheckCircle className="w-3 h-3" />
+              Koordinaten gefunden: {coordinates.lat.toFixed(6)}, {coordinates.lng.toFixed(6)}
+            </p>
+          )}
+        </div>
+
+        {/* ============================================ */}
+        {/* CONTACT INFO */}
+        {/* ============================================ */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Website */}
+          <div>
+            <label className="block text-sm font-semibold text-frameio-text-primary mb-2">
+              Website
+            </label>
+            <div className="relative">
+              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-frameio-text-secondary" />
+              <input
+                name="website"
+                type="url"
+                className="w-full bg-frameio-bg-secondary border border-frameio-border rounded-xl px-4 py-3 pl-11 text-frameio-text-primary focus:outline-none focus:border-frameio-primary focus:ring-2 focus:ring-frameio-primary/20 transition-all"
+                placeholder="https://beispiel.de"
+              />
+            </div>
+          </div>
+
+          {/* Telefon */}
+          <div>
+            <label className="block text-sm font-semibold text-frameio-text-primary mb-2">
+              Telefon
+            </label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-frameio-text-secondary" />
+              <input
+                name="phone"
+                type="tel"
+                className="w-full bg-frameio-bg-secondary border border-frameio-border rounded-xl px-4 py-3 pl-11 text-frameio-text-primary focus:outline-none focus:border-frameio-primary focus:ring-2 focus:ring-frameio-primary/20 transition-all"
+                placeholder="+49 511 123456"
+              />
+            </div>
+          </div>
+
+          {/* E-Mail */}
+          <div>
+            <label className="block text-sm font-semibold text-frameio-text-primary mb-2">
+              E-Mail
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-frameio-text-secondary" />
+              <input
+                name="email"
+                type="email"
+                className="w-full bg-frameio-bg-secondary border border-frameio-border rounded-xl px-4 py-3 pl-11 text-frameio-text-primary focus:outline-none focus:border-frameio-primary focus:ring-2 focus:ring-frameio-primary/20 transition-all"
+                placeholder="info@firma.de"
+              />
+            </div>
+          </div>
+
+          {/* Mitarbeiteranzahl */}
+          <div>
+            <label className="block text-sm font-semibold text-frameio-text-primary mb-2">
+              Mitarbeiteranzahl
+            </label>
+            <div className="relative">
+              <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-frameio-text-secondary" />
+              <input
+                name="employee_count"
+                type="number"
+                min="1"
+                className="w-full bg-frameio-bg-secondary border border-frameio-border rounded-xl px-4 py-3 pl-11 text-frameio-text-primary focus:outline-none focus:border-frameio-primary focus:ring-2 focus:ring-frameio-primary/20 transition-all"
+                placeholder="z.B. 45"
+              />
+            </div>
+          </div>
+
+          {/* Gründungsjahr */}
+          <div>
+            <label className="block text-sm font-semibold text-frameio-text-primary mb-2">
+              Gründungsjahr
+            </label>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-frameio-text-secondary" />
+              <input
+                name="founded_year"
+                type="number"
+                min="1900"
+                max={new Date().getFullYear()}
+                className="w-full bg-frameio-bg-secondary border border-frameio-border rounded-xl px-4 py-3 pl-11 text-frameio-text-primary focus:outline-none focus:border-frameio-primary focus:ring-2 focus:ring-frameio-primary/20 transition-all"
+                placeholder="z.B. 2015"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ============================================ */}
+        {/* DESCRIPTION */}
+        {/* ============================================ */}
+        <div>
+          <label className="block text-sm font-semibold text-frameio-text-primary mb-2">
+            Beschreibung
+          </label>
+          <textarea
+            name="description"
+            rows={4}
+            className="w-full bg-frameio-bg-secondary border border-frameio-border rounded-xl px-4 py-3 text-frameio-text-primary focus:outline-none focus:border-frameio-primary focus:ring-2 focus:ring-frameio-primary/20 transition-all resize-none"
+            placeholder="Kurze Beschreibung des Unternehmens und seiner Leistungen..."
+          />
+        </div>
+
+        {/* ============================================ */}
+        {/* SPECIALIZATIONS */}
+        {/* ============================================ */}
+        <div>
+          <label className="block text-sm font-semibold text-frameio-text-primary mb-3">
+            Spezialisierungen
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {specializations.map((spec) => (
+              <motion.button
+                key={spec.id}
+                type="button"
+                onClick={() => toggleSpecialization(spec.id)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`
+                  p-4 rounded-xl border-2 transition-all text-left
+                  ${selectedSpecs.includes(spec.id)
+                    ? 'border-frameio-primary bg-frameio-primary/5'
+                    : 'border-frameio-border hover:border-frameio-primary/30'
+                  }
+                `}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{spec.icon}</span>
+                  <div className="flex-1">
+                    <p className="font-medium text-sm text-frameio-text-primary">
+                      {spec.name}
+                    </p>
+                  </div>
+                  {selectedSpecs.includes(spec.id) && (
+                    <CheckCircle className="w-5 h-5 text-frameio-primary" />
+                  )}
+                </div>
+              </motion.button>
+            ))}
+          </div>
+        </div>
+
+        {/* ============================================ */}
+        {/* MESSAGE */}
+        {/* ============================================ */}
+        {message && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`
+              p-4 rounded-xl flex items-center gap-3
+              ${message.type === 'success' 
+                ? 'bg-green-50 text-green-800' 
+                : 'bg-red-50 text-red-800'
+              }
+            `}
+          >
+            {message.type === 'success' ? (
+              <CheckCircle className="w-5 h-5" />
+            ) : (
+              <XCircle className="w-5 h-5" />
+            )}
+            <p className="font-medium">{message.text}</p>
+          </motion.div>
+        )}
+
+        {/* ============================================ */}
+        {/* ACTIONS */}
+        {/* ============================================ */}
+        <div className="flex gap-4 pt-4">
+          <motion.button
+            type="submit"
+            disabled={createMutation.isPending}
+            whileHover={{ scale: createMutation.isPending ? 1 : 1.02 }}
+            whileTap={{ scale: createMutation.isPending ? 1 : 0.98 }}
+            className="bg-frameio-primary hover:bg-frameio-primary-hover text-white font-semibold px-6 py-3 rounded-full shadow-lg transition-all flex-1 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+          >
+            {createMutation.isPending ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Speichert...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-5 h-5 mr-2" />
+                Unternehmen hinzufügen
+              </>
+            )}
+          </motion.button>
+
+          {onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={createMutation.isPending}
+              className="px-6 py-3 rounded-xl border-2 border-frameio-border hover:bg-frameio-bg-secondary transition-colors disabled:opacity-50"
+            >
+              Abbrechen
+            </button>
+          )}
+        </div>
+      </form>
+    </motion.div>
   )
 }
-

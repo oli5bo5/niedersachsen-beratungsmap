@@ -12,3 +12,5 @@ export type CompanyWithSpecializations = Company & {
 export type CompanyInsert = Database['public']['Tables']['consulting_companies']['Insert']
 export type CompanyUpdate = Database['public']['Tables']['consulting_companies']['Update']
 
+
+

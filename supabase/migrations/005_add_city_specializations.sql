@@ -51,3 +51,5 @@ COMMENT ON TABLE city_specializations IS 'Junction table linking cities to speci
 
 
 
+
+

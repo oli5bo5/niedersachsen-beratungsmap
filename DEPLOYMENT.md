@@ -235,3 +235,5 @@ Bei Fragen oder Problemen: Prüfe die Vercel und Supabase Logs!
 
 
 
+
+

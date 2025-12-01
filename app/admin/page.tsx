@@ -9,8 +9,8 @@ import {
   MapPin, 
   BarChart3
 } from 'lucide-react'
-import AddCompanyForm from '@/components/admin/AddCompanyForm'
-import CompanyList from '@/components/admin/CompanyList'
+import AddCompanyForm from '@/components/Admin/AddCompanyForm'
+import CompanyList from '@/components/Admin/CompanyList'
 import { useStats } from '@/lib/hooks/useCompanies'
 
 export default function AdminPage() {
